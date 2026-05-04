@@ -1,0 +1,6 @@
+{
+  "name": "Map Locator",
+  "description": "Visualize geographical coordinates on an interactive map directly within the app.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
