@@ -1,6 +1,6 @@
 {
-  "name": "Map Locator",
-  "description": "Visualize geographical coordinates on an interactive map directly within the app.",
+  "name": "Enterprise Asset Tracker",
+  "description": "Enterprise-grade telemetry dashboard featuring real-time geocoding, multi-day path visualization with daily color-coding, interactive movement ledgers, and satellite/roadmap toggle capabilities for field asset monitoring.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
