@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MapPin, Loader2, ExternalLink, Globe, Layers, X, History, TrendingUp, Navigation2, Calendar, ChevronRight, Search, User, Briefcase, Users, LayoutGrid, Map as MapIcon, ChevronDown, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, AttributionControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-polylinedecorator';
@@ -316,8 +316,8 @@ export default function App() {
                 <MapIcon size={20} />
              </div>
              <div>
-                <h1 className="text-lg font-bold tracking-tight">Trace View</h1>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Enterprise Registry</p>
+                <h1 className="text-lg font-bold tracking-tight">Movement Tracking</h1>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Employee Registry</p>
              </div>
           </div>
 
@@ -605,9 +605,11 @@ export default function App() {
               center={[location.lat, location.lng]} 
               zoom={15} 
               zoomControl={false}
+              attributionControl={false}
               className="w-full h-full"
             >
               <ChangeView center={[location.lat, location.lng]} />
+              <AttributionControl prefix='<a href="https://www.linkedin.com/in/ahmadshafi016" target="_blank" rel="noreferrer">ARIF</a>' />
               <TileLayer
                 attribution='&copy; Google Maps'
                 url={mapStyle === 'hybrid' 

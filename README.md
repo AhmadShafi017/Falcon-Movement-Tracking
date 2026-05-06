@@ -1,47 +1,64 @@
-# Trace View: Enterprise Asset Analytics & Movement Registry
+# Falcon Movement Tracking: Enterprise Logistics & Personnel Analytics
 
-Trace View is a high-performance, precision-engineered telemetry dashboard designed for enterprise-grade asset tracking and movement analytics. It provides a seamless, high-fidelity interface for monitoring personnel movement, historical route analysis, and spatial logistics.
+Falcon Movement Tracking is a high-performance, precision-engineered telemetry dashboard designed for enterprise-grade asset tracking and movement analytics. It provides a seamless, high-fidelity interface for monitoring personnel movement, historical route analysis, and spatial logistics.
 
 ## 🚀 Key Features
 
 ### 📍 Precision Telemetry Mapping
-- **Multi-Day Path Visualizations**: Groups movement history by date with daily-unique color coding for distinct route separation.
-- **Directional Dynamics**: Real-time path decorations (directional arrows) indicating the vector of movement across the landscape.
-- **Smart Waypoints**: Dynamic marker system distinguishing between daily **Origin (Green)**, **Stoppage (Yellow)**, and **Terminal (Red)** points.
-- **Satellite Hybrid Engine**: Toggle between high-resolution Google Satellite imagery and standard Roadmap views for tactical or geographical context.
+- **Intelligent Path Dynamics**: Real-time path decorations with directional vectors, providing visual clarity on the exact flow of movement.
+- **Smart Waypoint System**: Automated status detection for waypoints—**Origin (Green)**, **Mid-route (Yellow)**, and **Terminal (Red)** points for immediate tactical orientation.
+- **Multi-Day Route Separation**: Visual grouping of historical movement history by date, using unique color-coding to distinguish daily operations.
+- **Dynamic View Switching**: Toggle between high-resolution Satellite Hybrid and Standard Roadmap views instantly via the sidebar control.
 
-### 🏢 Asset Dossier & Ledger
-- **Digital Asset Registry**: Complete employee profiling including designation, team hierarchy, and unique identifiers.
-- **Movement Ledger**: A chronological audit trail of every telemetry ping, featuring high-accuracy timestamps and status indicators.
-- **Focal Spotlight**: Clicking any ledger item triggers a spatial focus event on the map with advanced CSS "focal pulse" animations for instant identification.
+### 🏢 Personnel Registry & Audit Ledger
+- **Employee Dossier**: Comprehensive asset profiling including designations, team assignments, and unique tracking identifiers.
+- **Interactive Movement Ledger**: A deep-chronological audit trail of all telemetry pings, including real-time address resolution and high-resolution timestamps.
+- **Focal Spotlight Engine**: Advanced "Telemetric Focus" animations—clicking any ledger entry triggers an animated spatial focus on the map with a high-visibility pulse effect.
 
-### 🌍 Intelligent Geospatial Services
-- **Automated Reverse Geocoding**: Converts raw coordinate telemetry (Lat/Lng) into human-readable street addresses in real-time.
-- **Dynamic HUDs**: Context-aware address display in the sidebar "Sector" view and historical ledger.
-- **Adaptive Clipping**: Intelligently handles multi-user data synchronization and connectivity alerts.
+### 🌍 Advanced Geospatial Intelligence
+- **Real-Time Reverse Geocoding**: Automatically translates raw coordinate data (Latitude/Longitude) into human-readable street addresses using OSINT geospatial services.
+- **Contextual "Sector" Monitoring**: The sidebar dynamically updates to show the current "Sector" (Address) of the tracked asset for better operational awareness.
+- **Searchable Intelligence**: Filter movement data by date ranges or search for specific pings within the movement history.
 
-### 🎨 Design & Interaction
-- **Bento-Grid Architecture**: A clean, modular layout that prioritizes information density without sacrificing usability.
-- **Fluid Animations**: Staggered entrance effects and state transitions powered by `Framer Motion`.
-- **Glassmorphism UI**: High-contrast, frosted-glass interface elements for a modern "technical" aesthetic.
+### 🎨 Modular Design & Interaction
+- **Bento-Grid Architecture**: A clean, technical layout emphasizing data density, modularity, and rapid information retrieval.
+- **Motion-Engine Integration**: Fluid state transitions and staggered layout entrances powered by `motion/react`.
+- **Responsive Telemetry HUD**: A minimalist data overlay providing critical coordinates and viewing status without obstructing the spatial map.
 
 ## 🛠️ Technical Stack
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS
-- **Mapping Engine**: Leaflet.js with Custom Polyline Decorators
-- **Backend**: Node.js / Express (Full-stack implementation)
+- **Framework**: React 18 with Vite
+- **Language**: TypeScript (Strict Typings)
+- **Mapping**: Leaflet.js with custom `leaflet-polylinedecorator`
+- **Backend**: Express.js (Node.js) with native TypeScript support
+- **Database Connectivity**: Pre-configured for Oracle environments with robust error handling
+- **Styling**: Tailwind CSS 4.0
 - **Animations**: Framer Motion
-- **Data Hydration**: GIS / Nominatim OpenStreetMap API for Geocoding
-- **Iconography**: Lucide React
+- **Icons**: Lucide React
 
-## 📦 Getting Started
+## 📦 Local Setup
 
 1. **Clone the repository**
-2. **Install dependencies**: `npm install`
-3. **Set up environment variables**: Ensure any required API keys for mapping or databases are configured in `.env`.
-4. **Run development server**: `npm run dev`
-5. **Build for production**: `npm run build`
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+3. **Environment Configuration**:
+   Create a `.env` file based on `.env.example` and provide your database credentials:
+   ```env
+   ORACLE_USER=...
+   ORACLE_PASSWORD=...
+   ORACLE_CONNECTIONSTRING=...
+   ```
+4. **Development Mode**:
+   ```bash
+   npm run dev
+   ```
+5. **Production Build**:
+   ```bash
+   npm run build
+   ```
 
 ---
 
-*Built with precision for modern enterprise logistics.*
+*Engineered by ARIF | Powered by Falcon Intelligence*
