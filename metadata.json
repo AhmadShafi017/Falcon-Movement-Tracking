@@ -1,6 +1,6 @@
 {
-  "name": "LOCATION TRACKER",
+  "name": "Movement Tracking Dashboard",
   "description": "Enterprise-grade telemetry dashboard featuring real-time geocoding, multi-day path visualization with daily color-coding, interactive movement ledgers, and satellite/roadmap toggle capabilities for field asset monitoring.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

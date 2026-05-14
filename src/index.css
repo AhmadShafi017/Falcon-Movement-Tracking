@@ -1,18 +1,16 @@
 @import "tailwindcss";
-@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&family=Playfair+Display:ital,wght@1,400&display=swap');
-
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-serif: "Playfair Display", serif;
-}
 
 :root {
   --bg: #F8FAFC;
   --ink: #0F172A;
   --accent: #2563EB;
   --border: #E2E8F0;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: "Playfair Display", serif;
 }
 
 body {
