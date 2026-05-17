@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-polylinedecorator';
 import { Hospital, Store, MapPin } from 'lucide-react';
 import { POI, MovementPoint } from '../types';
-import { toBDTimeString, toBDDateTimeString } from '../utils/formatters';
+import { toBDTimeString, toBDDateOnlyString, getTimeElapsed } from '../utils/formatters';
 
 // Add polyline decorator type for TypeScript
 declare module 'leaflet' {
@@ -69,30 +69,42 @@ const storeIcon = new L.DivIcon({
   popupAnchor: [0, -48]
 });
 
-const createPinIcon = (color: string) => new L.DivIcon({
-  className: 'custom-pin',
-  html: `
-    <div class="relative flex flex-col items-center">
-      <div class="w-8 h-8 rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white ring-2 ring-white/50" style="background-color: ${color}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+const createPinIcon = (color: string, isSelected: boolean = false) => {
+  const size = isSelected ? 40 : 32;
+  const innerSize = isSelected ? 12 : 10;
+  return new L.DivIcon({
+    className: 'custom-pin',
+    html: `
+      <div class="relative flex flex-col items-center transition-all duration-300" style="transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'}; z-index: ${isSelected ? 1000 : 1}">
+        <div class="rounded-full border-4 border-white shadow-xl flex items-center justify-center text-white ring-2 ${isSelected ? 'ring-blue-400' : 'ring-white/50'}" 
+             style="background-color: ${color}; width: ${size}px; height: ${size}px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="${isSelected ? 18 : 14}" height="${isSelected ? 18 : 14}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="rotate-45 -mt-2 border-r-4 border-b-4 border-white shadow-sm" 
+             style="background-color: ${color}; width: ${innerSize + 2}px; height: ${innerSize + 2}px;"></div>
       </div>
-      <div class="w-3 h-3 rotate-45 -mt-2 border-r-4 border-b-4 border-white shadow-sm" style="background-color: ${color}"></div>
-    </div>
-  `,
-  iconSize: [32, 42],
-  iconAnchor: [16, 42],
-  popupAnchor: [0, -40]
-});
+    `,
+    iconSize: [size, size + 10],
+    iconAnchor: [size / 2, size + 10],
+    popupAnchor: [0, -size - 2]
+  });
+};
 
 const statusIcons = {
   active: createPinIcon('#10b981'),
   hibernate: createPinIcon('#f59e0b'),
+  leave: createPinIcon('#f43f5e'),
   inactive: createPinIcon('#f43f5e'),
   movement: createPinIcon('#2563eb')
 };
 
 const getStatus = (emp: any) => {
-  if (!emp.IN_TIME) return 'inactive';
+  if (emp.LOCATION_STATUS) {
+    if (emp.LOCATION_STATUS === 'LEAVE') return 'leave';
+    if (emp.LOCATION_STATUS.includes('YES')) return 'active';
+    if (emp.LOCATION_STATUS.includes('NO')) return 'hibernate';
+  }
+  if (!emp.IN_TIME) return 'leave';
   const lastUpdate = emp.SERVER_TIME ? new Date(emp.SERVER_TIME) : null;
   const now = new Date();
   const isRecent = lastUpdate && (now.getTime() - lastUpdate.getTime() < 3600000);
@@ -233,7 +245,7 @@ export const MainMap: React.FC<MainMapProps> = ({
         maxZoom={22}
         maxNativeZoom={20}
       />
-      <AttributionControl prefix='<a href="https://www.linkedin.com/in/ahmadshafi016" target="_blank" rel="noreferrer">ARIF</a>' />
+      <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">TRACKER</a>' />
 
       {filteredGlobalLocations.map((gl, idx) => {
         const status = getStatus(gl);
@@ -243,22 +255,90 @@ export const MainMap: React.FC<MainMapProps> = ({
         const lat = parseFloat(latStr);
         const lng = parseFloat(lngStr);
         if (isNaN(lat) || isNaN(lng)) return null;
-        if (currentPage === 'MOVEMENT' && selectedEmpId === gl.EMP_ID && location?.history?.length > 0) return null;
-        const iconToUse = currentPage === 'MOVEMENT' ? statusIcons.movement : statusIcons[status as keyof typeof statusIcons];
+        
+        const isSelected = selectedEmpId === gl.EMP_ID;
+        
+        // Restore Logic: In MOVEMENT mode, we hide the base marker if the telemetry focus/history is shown for the selected user
+        if (currentPage === 'MOVEMENT' && isSelected && location?.history?.length > 0) return null;
+        
+        const iconColor = currentPage === 'MOVEMENT' ? '#2563eb' : (
+          status === 'active' ? '#10b981' : 
+          status === 'hibernate' ? '#f59e0b' : 
+          '#f43f5e'
+        );
+
+        const iconToUse = createPinIcon(iconColor, isSelected);
 
         return (
-          <Marker key={`global-${gl.EMP_ID}-${idx}`} position={[lat, lng]} icon={iconToUse} eventHandlers={{ click: () => { setSelectedEmpId(gl.EMP_ID); syncHierarchy(gl); } }}>
+          <Marker 
+            key={`global-${gl.EMP_ID}-${idx}`} 
+            position={[lat, lng]} 
+            icon={iconToUse} 
+            zIndexOffset={isSelected ? 1000 : 0}
+            eventHandlers={{ 
+              click: (e) => { 
+                setSelectedEmpId(gl.EMP_ID); 
+                // Restore Logic: Only sync hierarchy (filter) if in MOVEMENT mode
+                if (currentPage === 'MOVEMENT') {
+                  syncHierarchy(gl);
+                }
+                e.target.openPopup();
+              } 
+            }}
+          >
             <Popup className="custom-popup">
-              <div className="p-3 min-w-[200px]">
-                <div className="flex items-center gap-3 mb-3 border-b border-slate-100 pb-2">
-                  <div className={`w-3 h-3 rounded-full ${status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : status === 'hibernate' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+              <div className="p-4 min-w-[280px] space-y-4">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                  <div className={`w-3.5 h-3.5 rounded-full ring-4 ${
+                    status === 'active' ? 'bg-emerald-500 ring-emerald-100' : 
+                    status === 'hibernate' ? 'bg-amber-500 ring-amber-100' : 
+                    status === 'leave' ? 'bg-rose-500 ring-rose-100' :
+                    'bg-slate-300 ring-slate-100'
+                  }`} />
                   <div>
-                    <p className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-none mb-1">{gl.EMP_NAME}</p>
-                    <p className="text-[9px] font-bold text-slate-400 font-mono italic">{gl.EMP_ID}</p>
+                    <p className="text-[14px] font-black text-slate-800 uppercase tracking-tight leading-none mb-1">{gl.EMP_NAME}</p>
+                    <p className="text-[10px] font-bold text-slate-400 font-mono italic tracking-wider">ID: {gl.EMP_ID}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedEmpId(gl.EMP_ID)} className="w-full mt-2 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold hover:bg-blue-600 transition-colors uppercase tracking-widest">
-                  View Data
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.15em]">Last Update Date</p>
+                    <p className="text-[11px] font-bold text-slate-700">{gl.SERVER_TIME ? toBDDateOnlyString(gl.SERVER_TIME) : 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.15em]">Last Update Time</p>
+                    <p className="text-[11px] font-bold text-slate-700">{gl.SERVER_TIME ? toBDTimeString(gl.SERVER_TIME) : 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.15em] mb-1">Time Elapsed</p>
+                  <p className="text-[11px] font-black text-blue-600 uppercase italic">
+                    {gl.SERVER_TIME ? getTimeElapsed(gl.SERVER_TIME) : 'SIGNAL LOST'}
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  <div className="border-l-2 border-slate-200 pl-3 py-0.5">
+                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Territory</p>
+                    <p className="text-[10px] font-bold text-slate-700">{gl.TERR_NAME} ({gl.TERR_CODE})</p>
+                  </div>
+                  <div className="border-l-2 border-slate-200 pl-3 py-0.5">
+                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Area</p>
+                    <p className="text-[10px] font-bold text-slate-700">{gl.AREA_NAME} ({gl.AREA_CODE})</p>
+                  </div>
+                  <div className="border-l-2 border-slate-200 pl-3 py-0.5">
+                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Region</p>
+                    <p className="text-[10px] font-bold text-slate-700">{gl.REGION_NAME} ({gl.REGION_CODE})</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setSelectedEmpId(gl.EMP_ID)} 
+                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black hover:bg-emerald-600 transition-all uppercase tracking-[0.2em] shadow-lg shadow-slate-100 active:scale-95"
+                >
+                  VIEW DATA
                 </button>
               </div>
             </Popup>

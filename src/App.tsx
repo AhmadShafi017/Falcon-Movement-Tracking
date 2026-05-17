@@ -1,15 +1,14 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Header } from './components/Header';
 import { MovementPage } from './pages/MovementPage';
 import { LocationPage } from './pages/LocationPage';
-import { ReportPage } from './pages/ReportPage';
 import { Employee, LocationData, MovementPoint } from './types';
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState<'MOVEMENT' | 'LOCATION'>('MOVEMENT');
   const [location, setLocation] = useState<LocationData | null>(null);
-  const [currentPage, setCurrentPage] = useState<'MOVEMENT' | 'LOCATION' | 'REPORT'>('MOVEMENT');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; instruction?: string; locked?: boolean } | null>(null);
   const [activePoint, setActivePoint] = useState<MovementPoint | null>(null);
@@ -56,7 +55,8 @@ export default function App() {
       .then(data => setEmployees(Array.from(new Map(data.map((item: any) => [item.EMP_ID, item])).values()) as Employee[]))
       .catch(console.error);
 
-    fetch(`/api/all-latest-locations?date=${targetDate}`)
+    const dateToFetch = currentPage === 'LOCATION' ? new Date().toISOString().split('T')[0] : targetDate;
+    fetch(`/api/all-latest-locations?date=${dateToFetch}`)
       .then(res => res.json())
       .then(data => setAllLatestLocations(data))
       .catch(console.error);
@@ -65,7 +65,7 @@ export default function App() {
       .then(res => res.json())
       .then(data => setDbStatus(data))
       .catch(err => setDbStatus({ status: 'error', error: err.message }));
-  }, [targetDate]);
+  }, [targetDate, currentPage]);
 
   useEffect(() => {
     if (activePoint && !addressCache[`${activePoint.lat}-${activePoint.lng}`]) {
@@ -123,6 +123,9 @@ export default function App() {
 
   const filteredGlobalLocations = useMemo(() => {
     return allLatestLocations.filter(e => {
+      // User requested: if no data for today (selected date), don't show on map in MOVEMENT
+      if (currentPage === 'MOVEMENT' && !e.IN_TIME && !e.LEAVE_TYPE) return false;
+
       const divMatch = !selDiv || (DIVISIONS[selDiv] ? DIVISIONS[selDiv](e) : true);
       const nhMatch = !selNH || e.NH_NAME === selNH || e.NH_CODE === selNH;
       const zoneMatch = !selZone || e.ZONE_NAME === selZone || e.ZONE_CODE === selZone;
@@ -131,7 +134,7 @@ export default function App() {
       const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
       return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch;
     });
-  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr]);
+  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage]);
 
   const syncHierarchy = (gl: any) => {
     // Optionally identify division from DIV_CODE and EMP_LEVEL
@@ -162,7 +165,8 @@ export default function App() {
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-white text-slate-900 font-sans">
       <Header 
-        dbStatus={dbStatus} setDbStatus={setDbStatus} currentPage={currentPage} setCurrentPage={setCurrentPage}
+        dbStatus={dbStatus} setDbStatus={setDbStatus}
+        currentPage={currentPage} setCurrentPage={setCurrentPage}
         targetDate={targetDate} setTargetDate={setTargetDate} handleManualSearch={() => {}} location={location}
       />
 
@@ -172,13 +176,32 @@ export default function App() {
              <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center text-amber-500 mb-8 shadow-xl"><AlertCircle size={32} /></div>
              <h3 className="text-xl font-bold mb-3 text-slate-800">{error.locked ? 'ACCOUNT LOCKED' : 'Link Alert'}</h3>
              <p className="text-sm font-bold text-slate-500 max-w-lg mb-4 uppercase tracking-widest leading-relaxed">{error.message}</p>
-             <button onClick={() => setError(null)} className="px-8 py-3.5 bg-blue-600 text-white text-[10px] font-bold rounded-2xl shadow-xl uppercase tracking-widest">Retry</button>
+             {error.instruction && (
+               <div className="bg-amber-100 border border-amber-200 p-6 rounded-2xl max-w-lg mb-6">
+                 <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2 text-left">Action Required:</h4>
+                 <p className="text-[11px] text-amber-900 font-bold text-left leading-relaxed">{error.instruction}</p>
+               </div>
+             )}
+             <div className="flex gap-4">
+               {error.locked && (
+                 <button 
+                   onClick={async () => {
+                     await fetch('/api/reset-lock', { method: 'POST' });
+                     setError(null);
+                     window.location.reload();
+                   }}
+                   className="px-8 py-3.5 bg-emerald-600 text-white text-[10px] font-bold rounded-2xl shadow-xl uppercase tracking-widest hover:bg-emerald-700 transition-all font-mono"
+                 >
+                   Reset Lock (I fixed it)
+                 </button>
+               )}
+               <button onClick={() => { setError(null); window.location.reload(); }} className="px-8 py-3.5 bg-blue-600 text-white text-[10px] font-bold rounded-2xl shadow-xl uppercase tracking-widest">Retry</button>
+             </div>
            </div>
         )}
 
         {currentPage === 'MOVEMENT' && <MovementPage {...sharedProps} />}
         {currentPage === 'LOCATION' && <LocationPage {...sharedProps} />}
-        {currentPage === 'REPORT' && <ReportPage {...sharedProps} />}
       </main>
     </div>
   );

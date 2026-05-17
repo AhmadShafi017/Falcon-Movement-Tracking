@@ -1,12 +1,12 @@
 
 import React, { useMemo } from 'react';
-import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation, Navigation2, LogOut, MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Employee, LocationData, MovementPoint } from '../types';
 import { getDesignation, getTeam, toBDTimeString } from '../utils/formatters';
 
 interface SidebarProps {
-  currentPage: 'MOVEMENT' | 'LOCATION' | 'REPORT';
+  currentPage: 'MOVEMENT' | 'LOCATION';
   loading: boolean;
   employees: Employee[];
   searchQuery: string;
@@ -69,7 +69,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   allLatestLocations,
 }) => {
   const getStatus = (emp: any) => {
-    if (!emp.IN_TIME) return 'inactive';
+    if (emp.LOCATION_STATUS) {
+      if (emp.LOCATION_STATUS === 'LEAVE') return 'leave';
+      if (emp.LOCATION_STATUS.includes('YES')) return 'active';
+      if (emp.LOCATION_STATUS.includes('NO')) return 'hibernate';
+    }
+    if (!emp.IN_TIME) return 'leave';
     const lastUpdate = emp.SERVER_TIME ? new Date(emp.SERVER_TIME) : null;
     const now = new Date();
     const isRecent = lastUpdate && (now.getTime() - lastUpdate.getTime() < 3600000);
@@ -115,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return { nhs, zones, regions, areas, terrs };
   }, [employees, selDiv, selNH, selZone, selRegion, selArea]);
 
-  const sidebarColorClass = currentPage === 'MOVEMENT' ? 'border-l-blue-600' : currentPage === 'LOCATION' ? 'border-l-emerald-500' : 'border-l-purple-600';
+  const sidebarColorClass = currentPage === 'MOVEMENT' ? 'border-l-blue-600' : 'border-l-emerald-500';
 
   return (
     <aside className="w-96 border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
@@ -294,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              </div>
              <div className="space-y-4 w-full">
                <div className="text-center px-6">
-                <h3 className="text-lg font-bold text-slate-700">{currentPage === 'REPORT' ? 'Reporting Stats' : 'Fleet Deployment'}</h3>
+                <h3 className="text-lg font-bold text-slate-700">Fleet Deployment</h3>
                 <p className="text-[10px] font-medium leading-relaxed text-slate-500 uppercase tracking-widest">
                     {selTerr || selArea || selRegion || selZone || selNH ? 
                       `Personnel in ${selTerr || selArea || selRegion || selZone || selNH}` : 
@@ -333,7 +338,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                </p>
              </div>
           </div>
-        ) : selectedEmpId && currentPage !== 'REPORT' && (!location || !location.history || location.history.length === 0) ? (
+        ) : selectedEmpId && (!location || !location.history || location.history.length === 0) ? (
           <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-400 space-y-6">
              <div className="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center text-orange-400 shadow-sm shadow-orange-100">
                 <AlertCircle size={40} />
@@ -439,7 +444,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
 
-              {currentPage === 'MOVEMENT' && (
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Movement Ledger</h3>
@@ -482,9 +486,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     })}
                   </div>
                 </div>
-              )}
-            </div>
-          </>
+              </div>
+            </>
         ) : null}
       </div>
     </aside>
