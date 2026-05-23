@@ -67,3 +67,37 @@ export const getTimeElapsed = (dateStr: string | null) => {
     return 'N/A';
   }
 };
+
+export const getEmployeeStatus = (emp: any) => {
+  if (!emp) return 'leave';
+  
+  // Priority 1: Specifically marked as Leave
+  if (emp.LOCATION_STATUS === 'LEAVE' || emp.LEAVE_TYPE) return 'leave';
+  
+  // Priority 2: Use the server-calculated status if available
+  // The server uses SYSDATE vs APPLY_DATE_TIME which is the most accurate
+  if (emp.LOCATION_STATUS) {
+    const status = String(emp.LOCATION_STATUS).toUpperCase();
+    if (status.includes('YES') || status === 'ACTIVE') return 'active';
+    if (status.includes('NO') || status === 'HIBERNATE') return 'hibernate';
+    if (status === 'LEAVE') return 'leave';
+  }
+
+  // Priority 3: Fallback client-side time check if server status is missing
+  // SERVER_TIME is NVL(L.SERVER_TIME, A.FULL_IN_TIME)
+  if (emp.SERVER_TIME) {
+    const lastUpdate = new Date(emp.SERVER_TIME);
+    const now = new Date();
+    const diffMs = now.getTime() - lastUpdate.getTime();
+    const ONE_HOUR = 3600000;
+    
+    // If update is within 1 hour, it's active
+    if (diffMs >= 0 && diffMs < ONE_HOUR) return 'active';
+    return 'hibernate';
+  }
+
+  // Priority 4: No IN_TIME means they haven't started yet today (Inactive/Leave)
+  if (!emp.IN_TIME) return 'leave';
+  
+  return 'hibernate';
+};

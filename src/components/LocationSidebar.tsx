@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Employee, LocationData, MovementPoint } from '../types';
-import { getDesignation, getTeam, toBDTimeString } from '../utils/formatters';
+import { getDesignation, getTeam, toBDTimeString, getEmployeeStatus } from '../utils/formatters';
 
 interface LocationSidebarProps {
   loading: boolean;
@@ -40,6 +40,8 @@ interface LocationSidebarProps {
   activeLocationData?: any[];
   activeDataLoading?: boolean;
   hibernateStatus?: any;
+  statusFilter: 'all' | 'active' | 'hibernate' | 'leave';
+  setStatusFilter: (v: 'all' | 'active' | 'hibernate' | 'leave') => void;
 }
 
 export const LocationSidebar: React.FC<LocationSidebarProps> = ({
@@ -77,20 +79,9 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
   activeLocationData = [],
   activeDataLoading = false,
   hibernateStatus = null,
+  statusFilter,
+  setStatusFilter,
 }) => {
-  const getStatus = (emp: any) => {
-    if (emp.LOCATION_STATUS) {
-      if (emp.LOCATION_STATUS === 'LEAVE') return 'leave';
-      if (emp.LOCATION_STATUS.includes('YES')) return 'active';
-      if (emp.LOCATION_STATUS.includes('NO')) return 'hibernate';
-    }
-    if (!emp.IN_TIME) return 'leave'; // Treat no in-time as leave/offline for color coding
-    const lastUpdate = emp.SERVER_TIME ? new Date(emp.SERVER_TIME) : null;
-    const now = new Date();
-    const isRecent = lastUpdate && (now.getTime() - lastUpdate.getTime() < 3600000);
-    return isRecent ? 'active' : 'hibernate';
-  };
-
   const hierarchyOptions = useMemo(() => {
     const DIVISIONS: Record<string, (e: any) => boolean> = {
       'GENERAL': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) !== '7' && String(e.EMP_LEVEL) !== '12',
@@ -130,6 +121,28 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
     return { nhs, zones, regions, areas, terrs };
   }, [employees, selDiv, selNH, selZone, selRegion, selArea]);
 
+  const hierarchyFilteredLocations = useMemo(() => {
+    const DIVISIONS: Record<string, (e: any) => boolean> = {
+      'GENERAL': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) !== '7' && String(e.EMP_LEVEL) !== '12',
+      'ASPIRE': (e) => String(e.DIV_CODE) === '20',
+      'WOMENS_CARE': (e) => String(e.DIV_CODE) === '60',
+      'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
+      'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
+      'DERMA': (e) => String(e.DIV_CODE) === '50',
+      'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+    };
+
+    return allLatestLocations.filter(e => {
+      const divMatch = !selDiv || (DIVISIONS[selDiv] ? DIVISIONS[selDiv](e) : true);
+      const nhMatch = !selNH || e.NH_NAME === selNH || e.NH_CODE === selNH;
+      const zoneMatch = !selZone || e.ZONE_NAME === selZone || e.ZONE_CODE === selZone;
+      const regionMatch = !selRegion || e.REGION_NAME === selRegion || e.REGION_CODE === selRegion;
+      const areaMatch = !selArea || e.AREA_NAME === selArea || e.AREA_CODE === selArea;
+      const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
+      return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch;
+    });
+  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr]);
+
   return (
     <aside className="w-96 border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
       <div className={`p-6 bg-slate-50/50 border-b border-slate-100 space-y-4 border-l-4 border-l-emerald-500`}>
@@ -157,33 +170,82 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 bg-emerald-50/60 border border-emerald-100 rounded-2xl transition-all hover:bg-emerald-50">
-            <p className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-widest mb-1">Active</p>
-            <p className="text-2xl font-black text-emerald-700 tracking-tight tabular-nums">
-              {filteredGlobalLocations.filter(gl => gl.LOCATION_STATUS?.includes('YES')).length}
+          <button 
+            onClick={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
+            className={`p-4 border rounded-2xl transition-all text-left group active:scale-95 ${
+              statusFilter === 'active' 
+                ? 'bg-emerald-600 border-emerald-500 shadow-lg shadow-emerald-100' 
+                : 'bg-emerald-50/60 border-emerald-100 hover:bg-emerald-100/80 hover:border-emerald-200'
+            }`}
+          >
+            <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-1 ${
+              statusFilter === 'active' ? 'text-emerald-100' : 'text-emerald-600'
+            }`}>Active</p>
+            <p className={`text-2xl font-black tracking-tight tabular-nums ${
+              statusFilter === 'active' ? 'text-white' : 'text-emerald-700'
+            }`}>
+              {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'active').length}
             </p>
-          </div>
+          </button>
           
-          <div className="p-4 bg-amber-50/60 border border-amber-100 rounded-2xl transition-all hover:bg-amber-50">
-            <p className="text-[9px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">Hibernate</p>
-            <p className="text-2xl font-black text-amber-700 tracking-tight tabular-nums">
-              {filteredGlobalLocations.filter(gl => gl.LOCATION_STATUS?.includes('NO')).length}
+          <button 
+            onClick={() => setStatusFilter(statusFilter === 'hibernate' ? 'all' : 'hibernate')}
+            className={`p-4 border rounded-2xl transition-all text-left group active:scale-95 ${
+              statusFilter === 'hibernate' 
+                ? 'bg-amber-600 border-amber-500 shadow-lg shadow-amber-100' 
+                : 'bg-amber-50/60 border-amber-100 hover:bg-amber-100/80 hover:border-amber-200'
+            }`}
+          >
+            <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-1 ${
+              statusFilter === 'hibernate' ? 'text-amber-100' : 'text-amber-600'
+            }`}>Hibernate</p>
+            <p className={`text-2xl font-black tracking-tight tabular-nums ${
+              statusFilter === 'hibernate' ? 'text-white' : 'text-amber-700'
+            }`}>
+              {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'hibernate').length}
             </p>
-          </div>
+          </button>
 
-          <div className="p-4 bg-rose-50/60 border border-rose-100 rounded-2xl transition-all hover:bg-rose-50">
-            <p className="text-[9px] font-extrabold text-rose-600 uppercase tracking-widest mb-1">Leave</p>
-            <p className="text-2xl font-black text-rose-700 tracking-tight tabular-nums">
-              {filteredGlobalLocations.filter(gl => gl.LOCATION_STATUS === 'LEAVE').length}
+          <button 
+            onClick={() => setStatusFilter(statusFilter === 'leave' ? 'all' : 'leave')}
+            className={`p-4 border rounded-2xl transition-all text-left group active:scale-95 ${
+              statusFilter === 'leave' 
+                ? 'bg-rose-600 border-rose-500 shadow-lg shadow-rose-100' 
+                : 'bg-rose-50/60 border-rose-100 hover:bg-rose-100/80 hover:border-rose-200'
+            }`}
+          >
+            <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-1 ${
+              statusFilter === 'leave' ? 'text-rose-100' : 'text-rose-600'
+            }`}>Leave</p>
+            <p className={`text-2xl font-black tracking-tight tabular-nums ${
+              statusFilter === 'leave' ? 'text-white' : 'text-rose-700'
+            }`}>
+              {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'leave').length}
             </p>
-          </div>
+          </button>
 
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl transition-all hover:bg-slate-100/50">
-            <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest mb-1">Total</p>
-            <p className="text-2xl font-black text-slate-800 tracking-tight tabular-nums">
-              {filteredGlobalLocations.length}
-            </p>
-          </div>
+          <button 
+            onClick={() => setStatusFilter('all')}
+            className={`p-4 border rounded-2xl transition-all text-left group active:scale-95 ${
+              statusFilter === 'all' 
+                ? 'bg-slate-800 border-slate-700 shadow-lg shadow-slate-200 outline-2 outline-slate-800 outline-offset-2' 
+                : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80 hover:border-slate-300'
+            }`}
+          >
+            <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-1 ${
+              statusFilter === 'all' ? 'text-slate-400' : 'text-slate-500'
+            }`}>Total</p>
+            <div className="flex items-end justify-between">
+              <p className={`text-2xl font-black tracking-tight tabular-nums ${
+                statusFilter === 'all' ? 'text-white' : 'text-slate-800'
+              }`}>
+                {hierarchyFilteredLocations.length}
+              </p>
+              {statusFilter !== 'all' && (
+                <span className="text-[10px] font-bold text-slate-400 mb-1 group-hover:text-blue-600 transition-colors">Reset</span>
+              )}
+            </div>
+          </button>
         </div>
       </div>
 
@@ -194,17 +256,174 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
             <p className="text-xs font-bold text-slate-500">Scanning Satellite Feeds...</p>
           </div>
         ) : !selectedEmpId ? (
-          <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-400 space-y-6">
-             <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-400 shadow-sm shadow-emerald-100">
-                <MapPin size={40} />
-             </div>
-             <div className="space-y-4 w-full">
-               <div className="text-center px-6">
-                <h3 className="text-lg font-black text-slate-800 tracking-tight">Signal Analysis Ready</h3>
-                <p className="text-[10px] font-medium leading-relaxed text-slate-400 uppercase tracking-widest mt-2">
-                    Select a node from the map or roster to track movement
-                </p>
-               </div>
+          <div className="p-6 space-y-6 animate-fadeIn">
+            {/* Search Input */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={14} className="text-slate-400" />
+              </div>
+              <input 
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search Employee ID or Name..."
+                className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-300 transition-all shadow-sm"
+              />
+              {searchQuery && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-2xl z-[60] max-h-60 overflow-y-auto custom-scrollbar">
+                  {employees
+                    .filter(e => {
+                      const q = searchQuery.toLowerCase();
+                      return (
+                        e.EMP_NAME.toLowerCase().includes(q) || 
+                        e.EMP_ID.toLowerCase().includes(q) ||
+                        e.TERR_NAME?.toLowerCase().includes(q) ||
+                        e.TERR_CODE?.toLowerCase().includes(q) ||
+                        e.AREA_NAME?.toLowerCase().includes(q) ||
+                        e.AREA_CODE?.toLowerCase().includes(q) ||
+                        e.REGION_NAME?.toLowerCase().includes(q) ||
+                        e.REGION_CODE?.toLowerCase().includes(q) ||
+                        e.ZONE_NAME?.toLowerCase().includes(q) ||
+                        e.ZONE_CODE?.toLowerCase().includes(q) ||
+                        e.NH_NAME?.toLowerCase().includes(q) ||
+                        e.NH_CODE?.toLowerCase().includes(q)
+                      );
+                    })
+                    .slice(0, 15)
+                    .map(emp => (
+                      <button
+                        key={emp.EMP_ID}
+                        onClick={() => {
+                          setSelectedEmpId(emp.EMP_ID);
+                          setSelNH(emp.NH_NAME || '');
+                          setSelZone(emp.ZONE_NAME || '');
+                          setSelRegion(emp.REGION_NAME || '');
+                          setSelArea(emp.AREA_NAME || '');
+                          setSelTerr(emp.TERR_NAME || '');
+                          setSearchQuery('');
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-emerald-50 border-b border-slate-50 last:border-0 transition-colors"
+                      >
+                        <p className="text-[11px] font-bold text-slate-700">{emp.EMP_NAME}</p>
+                        <p className="text-[9px] text-slate-400 font-mono">
+                          {emp.EMP_ID} • {emp.TERR_NAME ? `${emp.TERR_CODE} - ${emp.TERR_NAME}` : emp.AREA_NAME ? `${emp.AREA_CODE} - ${emp.AREA_NAME}` : 'HQ'}
+                        </p>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Deployment Hierarchy Selector Card */}
+            <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 space-y-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Users size={14} className="text-emerald-500" />
+                <h4 className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Deployment Hierarchy</h4>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {/* Division Selector */}
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">Division</label>
+                  <select 
+                    value={selDiv}
+                    onChange={(e) => {
+                      setSelDiv(e.target.value);
+                      setSelNH(''); setSelZone(''); setSelRegion(''); setSelArea(''); setSelTerr('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
+                  >
+                    <option value="">All Divisions</option>
+                    <option value="GENERAL">GENERAL</option>
+                    <option value="ASPIRE">ASPIRE</option>
+                    <option value="WOMENS_CARE">WOMEN'S CARE</option>
+                    <option value="ONCOLOGY">ONCOLOGY</option>
+                    <option value="SERVAY">SERVAY</option>
+                    <option value="DERMA">DERMA</option>
+                    <option value="SR">SR</option>
+                  </select>
+                </div>
+
+                {/* NH Name Selector */}
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">NH Name</label>
+                  <select 
+                    value={selNH}
+                    onChange={(e) => {
+                      setSelNH(e.target.value);
+                      setSelZone(''); setSelRegion(''); setSelArea(''); setSelTerr('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
+                  >
+                    <option value="">All NH</option>
+                    {hierarchyOptions.nhs.sort((a,b) => a.label.localeCompare(b.label)).map(n => <option key={n.code} value={n.name}>{n.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Zone Name Selector */}
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">Zone Name</label>
+                  <select 
+                    value={selZone}
+                    onChange={(e) => {
+                      setSelZone(e.target.value);
+                      setSelRegion(''); setSelArea(''); setSelTerr('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
+                  >
+                    <option value="">All Zones</option>
+                    {hierarchyOptions.zones.sort((a,b) => a.label.localeCompare(b.label)).map(z => <option key={z.code} value={z.name}>{z.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Region Name Selector */}
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">Region Name</label>
+                  <select 
+                    value={selRegion}
+                    onChange={(e) => {
+                      setSelRegion(e.target.value);
+                      setSelArea(''); setSelTerr('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
+                  >
+                    <option value="">All Regions</option>
+                    {hierarchyOptions.regions.sort((a,b) => a.label.localeCompare(b.label)).map(r => <option key={r.code} value={r.name}>{r.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Area Name Selector */}
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">Area Name</label>
+                  <select 
+                    value={selArea}
+                    onChange={(e) => {
+                      setSelArea(e.target.value);
+                      setSelTerr('');
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
+                  >
+                    <option value="">All Areas</option>
+                    {hierarchyOptions.areas.sort((a,b) => a.label.localeCompare(b.label)).map(a => <option key={a.code} value={a.name}>{a.label}</option>)}
+                  </select>
+                </div>
+
+                {/* Territory Name Selector */}
+                <div className="space-y-1">
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">Territory Name</label>
+                  <select 
+                    value={selTerr}
+                    onChange={(e) => setSelTerr(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
+                  >
+                    <option value="">All Territories</option>
+                    {hierarchyOptions.terrs.sort((a,b) => a.label.localeCompare(b.label)).map(t => <option key={t.code} value={t.name}>{t.label}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 w-full">
                {filteredGlobalLocations.length > 0 && (
                  <div className="px-6 space-y-3 text-left">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -222,11 +441,16 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
                             className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 rounded-xl transition-all group"
                           >
                             <div className="text-left flex items-center gap-3">
-                              <div className={`w-2 h-2 rounded-full shrink-0 ${
-                                gl.LOCATION_STATUS === 'LEAVE' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' :
-                                gl.LOCATION_STATUS?.includes('YES') ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 
-                                gl.LOCATION_STATUS?.includes('NO') ? 'bg-amber-500' : 'bg-slate-300'
-                              }`} />
+                              {(() => {
+                                const status = getEmployeeStatus(gl);
+                                return (
+                                  <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                    status === 'leave' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' :
+                                    status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 
+                                    'bg-amber-500'
+                                  }`} />
+                                );
+                              })()}
                               <div>
                                 <p className="text-[10px] font-bold text-slate-700 group-hover:text-emerald-600">{gl.EMP_NAME}</p>
                                 <p className="text-[8px] text-slate-400 font-mono">{gl.EMP_ID}</p>
@@ -248,7 +472,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
                   <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Live Signal</span>
                   {(() => {
                     const globalData = allLatestLocations.find(gl => gl.EMP_ID === location.id);
-                    const status = globalData ? getStatus(globalData) : 'inactive';
+                    const status = globalData ? getEmployeeStatus(globalData) : 'inactive';
                     return (
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 rounded-full border border-slate-100">
                         <div className={`w-1 h-1 rounded-full ${
@@ -346,29 +570,27 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
                   </div>
                 </div>
 
-                {hibernateStatus && (
-                  <div className={`p-5 rounded-2xl border transition-all ${
-                    hibernateStatus.LOCATION_STATUS?.includes('YES') 
-                      ? 'bg-emerald-50 border-emerald-100 shadow-sm' 
-                      : 'bg-amber-50 border-amber-100 shadow-sm'
-                  }`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        hibernateStatus.LOCATION_STATUS?.includes('YES') ? 'bg-emerald-500' : 'bg-amber-500'
-                      } animate-pulse`} />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pulse Status</span>
-                    </div>
-                    <p className={`text-xs font-bold leading-tight mb-2 ${
-                      hibernateStatus.LOCATION_STATUS?.includes('YES') ? 'text-emerald-700' : 'text-amber-700'
+                {hibernateStatus && (() => {
+                  const status = getEmployeeStatus(hibernateStatus);
+                  const isActive = status === 'active';
+                  return (
+                    <div className={`p-5 rounded-2xl border transition-all ${
+                      isActive ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-amber-50 border-amber-100 shadow-sm'
                     }`}>
-                      {hibernateStatus.LOCATION_STATUS}
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
-                      <span>Last Seen</span>
-                      <span className="text-slate-600 italic">{toBDTimeString(hibernateStatus.LAST_LOCATION_TIME)}</span>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pulse Status</span>
+                      </div>
+                      <p className={`text-xs font-bold leading-tight mb-2 ${isActive ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {hibernateStatus.LOCATION_STATUS}
+                      </p>
+                      <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
+                        <span>Last Seen</span>
+                        <span className="text-slate-600 italic">{toBDTimeString(hibernateStatus.LAST_LOCATION_TIME)}</span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <div className="grid grid-cols-1 gap-3 pt-4">
                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Environmental Overlays</h3>

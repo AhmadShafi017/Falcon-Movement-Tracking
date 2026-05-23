@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin } from 'lucide-react';
 import { POI } from '../types';
-import { toBDTimeString, toBDDateOnlyString, getTimeElapsed } from '../utils/formatters';
+import { toBDTimeString, toBDDateOnlyString, getTimeElapsed, getEmployeeStatus } from '../utils/formatters';
 
 const hospitalIcon = new L.DivIcon({
   className: 'location-marker',
@@ -52,26 +52,6 @@ const createPinIcon = (color: string, isSelected: boolean = false) => {
   });
 };
 
-const statusIcons = {
-  active: createPinIcon('#10b981'),
-  hibernate: createPinIcon('#f59e0b'),
-  leave: createPinIcon('#f43f5e'),
-  inactive: createPinIcon('#f43f5e')
-};
-
-const getStatus = (emp: any) => {
-  if (emp.LOCATION_STATUS) {
-    if (emp.LOCATION_STATUS === 'LEAVE') return 'leave';
-    if (emp.LOCATION_STATUS.includes('YES')) return 'active';
-    if (emp.LOCATION_STATUS.includes('NO')) return 'hibernate';
-  }
-  if (!emp.IN_TIME) return 'leave';
-  const lastUpdate = emp.SERVER_TIME ? new Date(emp.SERVER_TIME) : null;
-  const now = new Date();
-  const isRecent = lastUpdate && (now.getTime() - lastUpdate.getTime() < 3600000);
-  return isRecent ? 'active' : 'hibernate';
-};
-
 function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
   const map = useMap();
   useEffect(() => {
@@ -79,6 +59,33 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
       map.setView(center, Math.max(map.getZoom(), zoom));
     }
   }, [center, zoom, map]);
+  return null;
+}
+
+function FitBounds({ markers }: { markers: any[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (markers.length === 0) return;
+    
+    const validMarkers = markers.filter(m => {
+      const lat = m.GEO_LAT || m.IN_LAT;
+      const lng = m.GEO_LONG || m.IN_LONG;
+      return lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+    });
+
+    if (validMarkers.length === 0) return;
+
+    const bounds = L.latLngBounds(validMarkers.map(m => [
+      parseFloat(m.GEO_LAT || m.IN_LAT),
+      parseFloat(m.GEO_LONG || m.IN_LONG)
+    ]));
+
+    map.flyToBounds(bounds, { 
+      padding: [50, 50], 
+      maxZoom: 12,
+      duration: 1.5
+    });
+  }, [markers, map]);
   return null;
 }
 
@@ -125,6 +132,7 @@ export const LocationMap: React.FC<LocationMapProps> = ({
       ref={mapRef}
     >
       <ChangeView center={[center.lat, center.lng]} zoom={zoom} />
+      <FitBounds markers={filteredGlobalLocations} />
       <TileLayer 
         url={mapStyle === 'hybrid' ? "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" : "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"} 
         maxZoom={22}
@@ -133,7 +141,7 @@ export const LocationMap: React.FC<LocationMapProps> = ({
       <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">SIGNAL TRACKER</a>' />
 
       {filteredGlobalLocations.map((gl, idx) => {
-        const status = getStatus(gl);
+        const status = getEmployeeStatus(gl);
         const latStr = gl.GEO_LAT || gl.IN_LAT;
         const lngStr = gl.GEO_LONG || gl.IN_LONG;
         if (!latStr || !lngStr) return null;

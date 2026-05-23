@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-polylinedecorator';
 import { Hospital, Store, MapPin } from 'lucide-react';
 import { POI, MovementPoint } from '../types';
-import { toBDTimeString, toBDDateOnlyString, getTimeElapsed } from '../utils/formatters';
+import { toBDTimeString, toBDDateOnlyString, getTimeElapsed, getEmployeeStatus } from '../utils/formatters';
 
 // Add polyline decorator type for TypeScript
 declare module 'leaflet' {
@@ -88,27 +88,6 @@ const createPinIcon = (color: string, isSelected: boolean = false) => {
     iconAnchor: [size / 2, size + 10],
     popupAnchor: [0, -size - 2]
   });
-};
-
-const statusIcons = {
-  active: createPinIcon('#10b981'),
-  hibernate: createPinIcon('#f59e0b'),
-  leave: createPinIcon('#f43f5e'),
-  inactive: createPinIcon('#f43f5e'),
-  movement: createPinIcon('#2563eb')
-};
-
-const getStatus = (emp: any) => {
-  if (emp.LOCATION_STATUS) {
-    if (emp.LOCATION_STATUS === 'LEAVE') return 'leave';
-    if (emp.LOCATION_STATUS.includes('YES')) return 'active';
-    if (emp.LOCATION_STATUS.includes('NO')) return 'hibernate';
-  }
-  if (!emp.IN_TIME) return 'leave';
-  const lastUpdate = emp.SERVER_TIME ? new Date(emp.SERVER_TIME) : null;
-  const now = new Date();
-  const isRecent = lastUpdate && (now.getTime() - lastUpdate.getTime() < 3600000);
-  return isRecent ? 'active' : 'hibernate';
 };
 
 const MapDecorations: React.FC<{ path: [number, number][] }> = ({ path }) => {
@@ -248,7 +227,7 @@ export const MainMap: React.FC<MainMapProps> = ({
       <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">TRACKER</a>' />
 
       {filteredGlobalLocations.map((gl, idx) => {
-        const status = getStatus(gl);
+        const status = getEmployeeStatus(gl);
         const latStr = gl.GEO_LAT || gl.IN_LAT;
         const lngStr = gl.GEO_LONG || gl.IN_LONG;
         if (!latStr || !lngStr) return null;

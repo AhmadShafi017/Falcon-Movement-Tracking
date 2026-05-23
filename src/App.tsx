@@ -4,10 +4,12 @@ import { AlertCircle } from 'lucide-react';
 import { Header } from './components/Header';
 import { MovementPage } from './pages/MovementPage';
 import { LocationPage } from './pages/LocationPage';
+import { ReportPage } from './pages/ReportPage';
 import { Employee, LocationData, MovementPoint } from './types';
+import { getEmployeeStatus } from './utils/formatters';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'MOVEMENT' | 'LOCATION'>('MOVEMENT');
+  const [currentPage, setCurrentPage] = useState<'MOVEMENT' | 'LOCATION' | 'REPORT'>('MOVEMENT');
   const [location, setLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; instruction?: string; locked?: boolean } | null>(null);
@@ -27,6 +29,7 @@ export default function App() {
   const [selRegion, setSelRegion] = useState<string>('');
   const [selArea, setSelArea] = useState<string>('');
   const [selTerr, setSelTerr] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hibernate' | 'leave'>('all');
 
   const [mapStyle, setMapStyle] = useState<'hybrid' | 'roadmap'>('hybrid');
   const [addressCache, setAddressCache] = useState<Record<string, string>>({});
@@ -36,7 +39,7 @@ export default function App() {
 
   const handleClearFilters = () => {
     setSelDiv(''); setSelNH(''); setSelZone(''); setSelRegion(''); setSelArea(''); setSelTerr('');
-    setSelectedEmpId(''); setSearchQuery('');
+    setSelectedEmpId(''); setSearchQuery(''); setStatusFilter('all');
   };
 
   const DIVISIONS: Record<string, (e: any) => boolean> = {
@@ -58,7 +61,7 @@ export default function App() {
     const dateToFetch = currentPage === 'LOCATION' ? new Date().toISOString().split('T')[0] : targetDate;
     fetch(`/api/all-latest-locations?date=${dateToFetch}`)
       .then(res => res.json())
-      .then(data => setAllLatestLocations(data))
+      .then(data => setAllLatestLocations(Array.from(new Map(data.map((item: any) => [item.EMP_ID, item])).values())))
       .catch(console.error);
 
     fetch('/api/health')
@@ -126,6 +129,12 @@ export default function App() {
       // User requested: if no data for today (selected date), don't show on map in MOVEMENT
       if (currentPage === 'MOVEMENT' && !e.IN_TIME && !e.LEAVE_TYPE) return false;
 
+      // Status Filter
+      if (statusFilter !== 'all') {
+        const empStatus = getEmployeeStatus(e);
+        if (empStatus !== statusFilter) return false;
+      }
+
       const divMatch = !selDiv || (DIVISIONS[selDiv] ? DIVISIONS[selDiv](e) : true);
       const nhMatch = !selNH || e.NH_NAME === selNH || e.NH_CODE === selNH;
       const zoneMatch = !selZone || e.ZONE_NAME === selZone || e.ZONE_CODE === selZone;
@@ -134,7 +143,7 @@ export default function App() {
       const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
       return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch;
     });
-  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage]);
+  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage, statusFilter]);
 
   const syncHierarchy = (gl: any) => {
     // Optionally identify division from DIV_CODE and EMP_LEVEL
@@ -159,7 +168,8 @@ export default function App() {
     selRegion, setSelRegion, selArea, setSelArea, selTerr, setSelTerr, handleClearFilters,
     selectedEmpId, setSelectedEmpId, location, activePoint, handlePointSelect: setActivePoint,
     addressCache, mapStyle, setMapStyle, totalDistance, filteredGlobalLocations, allLatestLocations,
-    syncHierarchy, showHospitals, setShowHospitals, showCustomers, setShowCustomers, pois, setPois, setPoiLoading
+    syncHierarchy, showHospitals, setShowHospitals, showCustomers, setShowCustomers, pois, setPois, setPoiLoading,
+    statusFilter, setStatusFilter
   };
 
   return (
@@ -202,6 +212,15 @@ export default function App() {
 
         {currentPage === 'MOVEMENT' && <MovementPage {...sharedProps} />}
         {currentPage === 'LOCATION' && <LocationPage {...sharedProps} />}
+        {currentPage === 'REPORT' && (
+          <ReportPage 
+            employees={employees}
+            setCurrentPage={setCurrentPage}
+            setSelectedEmpId={setSelectedEmpId}
+            setTargetDate={setTargetDate}
+            syncHierarchy={syncHierarchy}
+          />
+        )}
       </main>
     </div>
   );

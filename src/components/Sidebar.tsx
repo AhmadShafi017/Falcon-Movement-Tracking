@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Employee, LocationData, MovementPoint } from '../types';
-import { getDesignation, getTeam, toBDTimeString } from '../utils/formatters';
+import { getDesignation, getTeam, toBDTimeString, getEmployeeStatus } from '../utils/formatters';
 
 interface SidebarProps {
   currentPage: 'MOVEMENT' | 'LOCATION';
@@ -68,19 +68,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   filteredGlobalLocations,
   allLatestLocations,
 }) => {
-  const getStatus = (emp: any) => {
-    if (emp.LOCATION_STATUS) {
-      if (emp.LOCATION_STATUS === 'LEAVE') return 'leave';
-      if (emp.LOCATION_STATUS.includes('YES')) return 'active';
-      if (emp.LOCATION_STATUS.includes('NO')) return 'hibernate';
-    }
-    if (!emp.IN_TIME) return 'leave';
-    const lastUpdate = emp.SERVER_TIME ? new Date(emp.SERVER_TIME) : null;
-    const now = new Date();
-    const isRecent = lastUpdate && (now.getTime() - lastUpdate.getTime() < 3600000);
-    return isRecent ? 'active' : 'hibernate';
-  };
-
   const hierarchyOptions = useMemo(() => {
     const DIVISIONS: Record<string, (e: any) => boolean> = {
       'GENERAL': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) !== '7' && String(e.EMP_LEVEL) !== '12',
@@ -356,7 +343,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Asset Dossier</span>
                   {(() => {
                     const globalData = allLatestLocations.find(gl => gl.EMP_ID === location.id);
-                    const status = globalData ? getStatus(globalData) : 'inactive';
+                    const status = globalData ? getEmployeeStatus(globalData) : 'inactive';
                     return (
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 rounded-full border border-slate-100">
                         <div className={`w-1 h-1 rounded-full ${

@@ -1,0 +1,581 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { Calendar, Search, Trash2, Download, ExternalLink, MapPin, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Employee } from '../types';
+import { getDesignation, getTeam } from '../utils/formatters';
+import { getInstantLocationName } from '../utils/geocoder';
+
+interface ReportPageProps {
+  employees: Employee[];
+  setCurrentPage: (p: 'MOVEMENT' | 'LOCATION' | 'REPORT') => void;
+  setSelectedEmpId: (id: string) => void;
+  setTargetDate: (d: string) => void;
+  syncHierarchy: (gl: any) => void;
+}
+
+export const ReportPage: React.FC<ReportPageProps> = ({
+  employees,
+  setCurrentPage,
+  setSelectedEmpId,
+  setTargetDate,
+  syncHierarchy,
+}) => {
+  // Filter Inputs State
+  // Default date: from 1st of current month to today
+  const getFirstDayOfMonth = () => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+  };
+  const getToday = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const [fDate, setFDate] = useState<string>(getFirstDayOfMonth());
+  const [tDate, setTDate] = useState<string>(getToday());
+  const [selDiv, setSelDiv] = useState<string>('ALL');
+  const [selNSM, setSelNSM] = useState<string>('ALL');
+  const [selZone, setSelZone] = useState<string>('ALL');
+  const [selRegion, setSelRegion] = useState<string>('ALL');
+  const [selArea, setSelArea] = useState<string>('ALL');
+  const [selTerr, setSelTerr] = useState<string>('ALL');
+  const [selDesignation, setSelDesignation] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Report results state
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Pagination
+  const [currentPageNum, setCurrentPageNum] = useState<number>(1);
+  const itemsPerPage = 20;
+
+  // NSM List: level '2'
+  const nsmList = useMemo(() => {
+    const list = employees.filter(e => String(e.EMP_LEVEL) === '2');
+    const unique = new Map<string, string>();
+    list.forEach(e => {
+      unique.set(e.EMP_ID, e.EMP_NAME);
+    });
+    return Array.from(unique.entries()).map(([id, name]) => ({ id, name }));
+  }, [employees]);
+
+  // Dynamic selector options based on hierarchy
+  const DIVISIONS: Record<string, (e: any) => boolean> = {
+    'GENERAL': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) !== '7' && String(e.EMP_LEVEL) !== '12',
+    'ASPIRE': (e) => String(e.DIV_CODE) === '20',
+    'WOMENS_CARE': (e) => String(e.DIV_CODE) === '60',
+    'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
+    'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
+    'DERMA': (e) => String(e.DIV_CODE) === '50',
+    'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+  };
+
+  const currentHierarchyOptions = useMemo(() => {
+    const getUniquePairs = (list: Employee[], codeKey: keyof Employee, nameKey: keyof Employee) => {
+      const map = new Map<string, string>();
+      list.forEach(e => {
+        const code = e[codeKey] as string;
+        const name = e[nameKey] as string;
+        if (code && name) map.set(code, name);
+      });
+      return Array.from(map.entries()).map(([code, name]) => ({ code, name, label: `${code} - ${name}` }));
+    };
+
+    const divFiltered = employees.filter(e => selDiv === 'ALL' || (DIVISIONS[selDiv] ? DIVISIONS[selDiv](e) : true));
+    const zones = getUniquePairs(divFiltered, 'ZONE_CODE', 'ZONE_NAME');
+
+    const zoneFiltered = divFiltered.filter(e => selZone === 'ALL' || e.ZONE_NAME === selZone || e.ZONE_CODE === selZone);
+    const regions = getUniquePairs(zoneFiltered, 'REGION_CODE', 'REGION_NAME');
+
+    const regionFiltered = zoneFiltered.filter(e => selRegion === 'ALL' || e.REGION_NAME === selRegion || e.REGION_CODE === selRegion);
+    const areas = getUniquePairs(regionFiltered, 'AREA_CODE', 'AREA_NAME');
+
+    const areaFiltered = regionFiltered.filter(e => selArea === 'ALL' || e.AREA_NAME === selArea || e.AREA_CODE === selArea);
+    const terrs = getUniquePairs(areaFiltered, 'TERR_CODE', 'TERR_NAME');
+
+    return { zones, regions, areas, terrs };
+  }, [employees, selDiv, selZone, selRegion, selArea]);
+
+  // Designation mappings for selection
+  const designationList = [
+    { code: '6', label: 'Medical Promotion Officer (MPO)' },
+    { code: '5', label: 'Area Manager (AM)' },
+    { code: '4', label: 'Regional Manager (RM)' },
+    { code: '3', label: 'Zone Head (ZH)' },
+    { code: '2', label: 'National Sales Manager (NSM)' },
+    { code: '7', label: 'Sales Representative (SR)' }
+  ];
+
+  // Load report data
+  const handleFetchReport = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    setCurrentPageNum(1);
+    try {
+      const queryParams = new URLSearchParams({
+        fromDate: fDate,
+        toDate: tDate,
+        division: selDiv,
+        nsm: selNSM,
+        zone: selZone,
+        region: selRegion,
+        area: selArea,
+        territory: selTerr,
+        designation: selDesignation,
+      });
+
+      const response = await fetch(`/api/report-data?${queryParams.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Server returned error status ${response.status}`);
+      }
+      const data = await response.json();
+      setReportData(data);
+    } catch (err: any) {
+      console.error("Report Fetch Failed:", err);
+      setErrorMsg(err.message || 'Failed to generate report. Please check configurations.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Trigger load on mounting
+  useEffect(() => {
+    handleFetchReport();
+  }, []);
+
+  const handleClear = () => {
+    setFDate(getFirstDayOfMonth());
+    setTDate(getToday());
+    setSelDiv('ALL');
+    setSelNSM('ALL');
+    setSelZone('ALL');
+    setSelRegion('ALL');
+    setSelArea('ALL');
+    setSelTerr('ALL');
+    setSelDesignation('ALL');
+    setSearchQuery('');
+  };
+
+  // Redirect click to Map View Tracker
+  const handleShowOnMap = (row: any) => {
+    // 1. Sync Date
+    setTargetDate(row.APPLY_DATE);
+    // 2. Set Employee
+    setSelectedEmpId(row.EMP_ID);
+    // 3. Set page mode
+    setCurrentPage('MOVEMENT');
+  };
+
+  // CSV Export helper
+  const handleExportCSV = () => {
+    if (filteredReportData.length === 0) return;
+    
+    const headers = [
+      "Territory Code", 
+      "Territory Name", 
+      "Emp. Id.", 
+      "Emp. Name", 
+      "Designation", 
+      "Division", 
+      "Date", 
+      "Time", 
+      "Event Type",
+      "Coordinates",
+      "Location Address"
+    ];
+    
+    const csvRows = [headers.join(",")];
+    
+    filteredReportData.forEach(row => {
+      const resolvedAddress = getInstantLocationName(row.LATITUDE, row.LONGITUDE, row.TERR_NAME);
+      const values = [
+        `"${row.TERR_CODE || ''}"`,
+        `"${row.TERR_NAME || ''}"`,
+        `"${row.EMP_ID || ''}"`,
+        `"${row.EMP_NAME || ''}"`,
+        `"${getDesignation(row.EMP_LEVEL)}"`,
+        `"${getTeam(row.DIV_CODE)}"`,
+        `"${row.APPLY_DATE || ''}"`,
+        `"${row.TIME_STR || ''}"`,
+        `"${row.EVENT_NAME || 'Tracked Location'}"`,
+        `"${row.LATITUDE ? Number(row.LATITUDE).toFixed(5) : ''}, ${row.LONGITUDE ? Number(row.LONGITUDE).toFixed(5) : ''}"`,
+        `"${resolvedAddress.replace(/"/g, '""')}"`
+      ];
+      csvRows.push(values.join(","));
+    });
+    
+    const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Employee_Registry_Report_${fDate}_to_${tDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Dynamic client-side instant filter by Emp ID, Name, or Territory
+  const filteredReportData = useMemo(() => {
+    if (!searchQuery.trim()) return reportData;
+    const q = searchQuery.toLowerCase().trim();
+    return reportData.filter(row => {
+      const empId = String(row.EMP_ID || '').toLowerCase();
+      const empName = String(row.EMP_NAME || '').toLowerCase();
+      const terrCode = String(row.TERR_CODE || '').toLowerCase();
+      const terrName = String(row.TERR_NAME || '').toLowerCase();
+      return empId.includes(q) || empName.includes(q) || terrCode.includes(q) || terrName.includes(q);
+    });
+  }, [reportData, searchQuery]);
+
+  // Pagination chunking
+  const paginatedData = useMemo(() => {
+    const startIdx = (currentPageNum - 1) * itemsPerPage;
+    return filteredReportData.slice(startIdx, startIdx + itemsPerPage);
+  }, [filteredReportData, currentPageNum]);
+
+  const totalPages = Math.ceil(filteredReportData.length / itemsPerPage) || 1;
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-slate-50 p-6 flex flex-col gap-6">
+      {/* Search Input Box Frame */}
+      <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+              <Calendar size={18} />
+            </span>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">Operational Report Scheduler</h2>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Set Filters & Generate Historical Trace sheet</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleClear} 
+              className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 border border-slate-100 transition-colors"
+            >
+              <Trash2 size={13} />
+              Reset Filters
+            </button>
+            <button 
+              onClick={handleFetchReport} 
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-blue-100 transition-all"
+            >
+              <Search size={13} />
+              Generate Report
+            </button>
+          </div>
+        </div>
+
+        {/* Dynamic Compact Input Grid matching exact Excel structure */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 text-xs">
+          {/* Row item: From Date */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">From Date</label>
+            <div className="relative">
+              <input 
+                type="date" 
+                value={fDate} 
+                onChange={(e) => setFDate(e.target.value)} 
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all" 
+              />
+            </div>
+          </div>
+
+          {/* Row item: To Date */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">To Date</label>
+            <div className="relative">
+              <input 
+                type="date" 
+                value={tDate} 
+                onChange={(e) => setTDate(e.target.value)} 
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all" 
+              />
+            </div>
+          </div>
+
+          {/* Row item: Division */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Division</label>
+            <select 
+              value={selDiv} 
+              onChange={(e) => { setSelDiv(e.target.value); setSelZone('ALL'); setSelRegion('ALL'); setSelArea('ALL'); setSelTerr('ALL'); }}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All Divisions</option>
+              <option value="GENERAL">General</option>
+              <option value="ASPIRE">Aspire</option>
+              <option value="WOMENS_CARE">Women's Care</option>
+              <option value="ONCOLOGY">Oncology</option>
+              <option value="SERVAY">Servay</option>
+              <option value="DERMA">Derma</option>
+              <option value="SR">SR</option>
+            </select>
+          </div>
+
+          {/* Row item: NSM */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">NSM Designation</label>
+            <select
+              value={selNSM}
+              onChange={(e) => setSelNSM(e.target.value)}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All NSMs</option>
+              {nsmList.sort((a,b) => a.name.localeCompare(b.name)).map(item => (
+                <option key={item.id} value={item.name}>{item.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Row item: Zone */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Zone Code/Name</label>
+            <select
+              value={selZone}
+              onChange={(e) => { setSelZone(e.target.value); setSelRegion('ALL'); setSelArea('ALL'); setSelTerr('ALL'); }}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All Zones</option>
+              {currentHierarchyOptions.zones.sort((a,b) => a.label.localeCompare(b.label)).map(item => (
+                <option key={item.code} value={item.name}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Row item: Region */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Region Code/Name</label>
+            <select
+              value={selRegion}
+              onChange={(e) => { setSelRegion(e.target.value); setSelArea('ALL'); setSelTerr('ALL'); }}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All Regions</option>
+              {currentHierarchyOptions.regions.sort((a,b) => a.label.localeCompare(b.label)).map(item => (
+                <option key={item.code} value={item.name}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Row item: Area */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Area Code/Name</label>
+            <select
+              value={selArea}
+              onChange={(e) => { setSelArea(e.target.value); setSelTerr('ALL'); }}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All Areas</option>
+              {currentHierarchyOptions.areas.sort((a,b) => a.label.localeCompare(b.label)).map(item => (
+                <option key={item.code} value={item.name}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Row item: Territory */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Territory Code/Name</label>
+            <select
+              value={selTerr}
+              onChange={(e) => setSelTerr(e.target.value)}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All Territories</option>
+              {currentHierarchyOptions.terrs.sort((a,b) => a.label.localeCompare(b.label)).map(item => (
+                <option key={item.code} value={item.name}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Row item: Designation */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Designation</label>
+            <select
+              value={selDesignation}
+              onChange={(e) => setSelDesignation(e.target.value)}
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all cursor-pointer"
+            >
+              <option value="ALL">All Designations</option>
+              {designationList.map(item => (
+                <option key={item.code} value={item.code}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Row item: Search Employee ID or Name */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Search Employee (ID / Name)</label>
+            <div className="relative">
+              <input 
+                type="text"
+                placeholder="Search Emp ID or Name..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPageNum(1);
+                }}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all font-sans"
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                <Search size={14} className="stroke-[2.5]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Spreadsheet / Report Results Area */}
+      <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">Operational Log Entry Sheet</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              Found {filteredReportData.length} records{searchQuery && ` (filtered from ${reportData.length})`} • Ordered chronologically Old to New
+            </p>
+          </div>
+          {filteredReportData.length > 0 && (
+            <button 
+              onClick={handleExportCSV}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/10 transition-colors"
+            >
+              <Download size={13} />
+              Export to Excel (CSV)
+            </button>
+          )}
+        </div>
+
+        {errorMsg && (
+          <div className="p-6 bg-red-50 text-red-700 text-xs font-bold border-b border-red-100">
+            {errorMsg}
+          </div>
+        )}
+
+        {/* Scrollable Spreadsheet Grid */}
+        <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[300px]">
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center p-12 space-y-3">
+              <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+              <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Querying tracking databases...</p>
+            </div>
+          ) : filteredReportData.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center p-12 text-slate-400">
+              <Calendar size={48} className="text-slate-200 mb-3" />
+              <p className="text-xs font-bold uppercase tracking-widest">No matching records found for current filters</p>
+              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Try moving date ranges or selecting other territories</p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/75 border-b border-slate-100 text-[9px] font-extrabold text-slate-400 uppercase tracking-widest sticky top-0 bg-white z-10">
+                  <th className="px-6 py-4">Territory Code</th>
+                  <th className="px-6 py-4">Territory Name</th>
+                  <th className="px-6 py-4">Emp. Id.</th>
+                  <th className="px-6 py-4">Emp. Name</th>
+                  <th className="px-6 py-4">Designation</th>
+                  <th className="px-6 py-4">Division</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4">Time</th>
+                  <th className="px-6 py-4">Location Name</th>
+                  <th className="px-6 py-4 text-center">Click on Map View Link</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-[11px] font-bold text-slate-700">
+                {paginatedData.map((row, idx) => (
+                  <tr key={`${row.EMP_ID}-${row.APPLY_DATE}-${row.TIME_STR}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-3.5 font-mono text-slate-500">{row.TERR_CODE}</td>
+                    <td className="px-6 py-3.5">{row.TERR_NAME}</td>
+                    <td className="px-6 py-3.5 font-mono text-slate-400">{row.EMP_ID}</td>
+                    <td className="px-6 py-3.5 text-slate-800">{row.EMP_NAME}</td>
+                    <td className="px-6 py-3.5">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-sans text-[10px] font-bold">
+                        {getDesignation(row.EMP_LEVEL)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-slate-500">{getTeam(row.DIV_CODE)}</td>
+                    <td className="px-6 py-3.5 font-mono text-slate-500">{row.APPLY_DATE}</td>
+                    <td className="px-6 py-3.5 font-mono text-slate-500">{row.TIME_STR}</td>
+                    <td className="px-6 py-3.5 max-w-[280px]">
+                      <div className="flex flex-col gap-1 text-slate-700">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                            row.EVENT_NAME === 'Attendance In' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                            row.EVENT_NAME === 'Attendance Out' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                            'bg-blue-50 text-blue-600 border border-blue-100'
+                          }`}>
+                            {row.EVENT_NAME || 'Tracked'}
+                          </span>
+                          <span className="text-[9px] text-slate-400 font-mono">
+                            {Number(row.LATITUDE).toFixed(4)}, {Number(row.LONGITUDE).toFixed(4)}
+                          </span>
+                        </div>
+                        <div className="text-[11px] font-extrabold text-slate-800 flex items-start gap-1 leading-snug">
+                          <MapPin size={12} className="text-blue-500 shrink-0 mt-0.5" />
+                          <span>{getInstantLocationName(row.LATITUDE, row.LONGITUDE, row.TERR_NAME)}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-3.5 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        <button 
+                          onClick={() => handleShowOnMap(row)}
+                          className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors flex items-center gap-1.5 font-sans text-[10px]"
+                        >
+                          <MapPin size={10} />
+                          Switch to Tracker
+                        </button>
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${row.LATITUDE},${row.LONGITUDE}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1 text-slate-300 hover:text-slate-500 hover:bg-slate-100 rounded-md transition-all"
+                          title="Open in Google Maps"
+                        >
+                          <ExternalLink size={12} />
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Spreadsheet Table Footer / Pagination */}
+        {!loading && filteredReportData.length > 0 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between shrink-0 bg-white">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Showing {Math.min(filteredReportData.length, (currentPageNum - 1) * itemsPerPage + 1)}-{Math.min(filteredReportData.length, currentPageNum * itemsPerPage)} of {filteredReportData.length} records
+            </span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPageNum(prev => Math.max(1, prev - 1))}
+                disabled={currentPageNum === 1}
+                className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-600">
+                <span>Page</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-800 font-mono">{currentPageNum}</span>
+                <span>of</span>
+                <span className="font-mono">{totalPages}</span>
+              </div>
+
+              <button 
+                onClick={() => setCurrentPageNum(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPageNum === totalPages}
+                className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

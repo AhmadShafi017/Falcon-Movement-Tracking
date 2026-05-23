@@ -5,8 +5,8 @@ import { Map as MapIcon, RefreshCw, Calendar, Filter, ExternalLink, ChevronDown 
 interface HeaderProps {
   dbStatus: any;
   setDbStatus: (s: any) => void;
-  currentPage: 'MOVEMENT' | 'LOCATION';
-  setCurrentPage: (p: 'MOVEMENT' | 'LOCATION') => void;
+  currentPage: 'MOVEMENT' | 'LOCATION' | 'REPORT';
+  setCurrentPage: (p: 'MOVEMENT' | 'LOCATION' | 'REPORT') => void;
   targetDate: string;
   setTargetDate: (d: string) => void;
   handleManualSearch: () => void;
@@ -31,7 +31,11 @@ export const Header: React.FC<HeaderProps> = ({
               <MapIcon size={20} />
            </div>
            <div>
-              <h1 className="text-lg font-bold tracking-tight">{currentPage === 'MOVEMENT' ? 'Movement Tracking' : 'Current Location'}</h1>
+              <h1 className="text-lg font-bold tracking-tight">
+                {currentPage === 'MOVEMENT' ? 'Movement Tracking' : 
+                 currentPage === 'LOCATION' ? 'Current Location' : 
+                 'Operational Reports'}
+              </h1>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Employee Registry</p>
            </div>
         </div>
@@ -72,6 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <option value="MOVEMENT">MOVEMENT TRACKING</option>
               <option value="LOCATION">CURRENT LOCATION</option>
+              <option value="REPORT">OPERATIONAL REPORT</option>
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
               <ChevronDown size={14} className="text-slate-400" />
@@ -81,7 +86,12 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-4">
-        {currentPage === 'MOVEMENT' ? (
+        {currentPage === 'REPORT' ? (
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-2 rounded-2xl">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">Reporting Interactive</span>
+          </div>
+        ) : currentPage === 'MOVEMENT' ? (
           <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 p-1.5 rounded-2xl">
             <Calendar size={14} className="text-blue-600 ml-2" />
             <input 
@@ -98,16 +108,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        <a 
-          href={location ? `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}` : '#'}
-          onClick={(e) => !location && e.preventDefault()}
-          target="_blank" 
-          rel="noreferrer"
-          className={`flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-bold transition-all shadow-lg hover:shadow-slate-200 hover:-translate-y-0.5 ${!location ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <ExternalLink size={14} className="text-blue-400" />
-          <span className="tracking-widest uppercase">Open Google Maps</span>
-        </a>
+        {currentPage !== 'REPORT' && (
+          <a 
+            href={location ? `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}` : '#'}
+            onClick={(e) => !location && e.preventDefault()}
+            target="_blank" 
+            rel="noreferrer"
+            className={`flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-bold transition-all shadow-lg hover:shadow-slate-200 hover:-translate-y-0.5 ${!location ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <ExternalLink size={14} className="text-blue-400" />
+            <span className="tracking-widest uppercase">Open Google Maps</span>
+          </a>
+        )}
       </div>
     </header>
   );
