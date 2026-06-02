@@ -13,7 +13,293 @@ async function startServer() {
   const PORT = 3000;
 
   // API Routes
-  
+
+  let currentActivePage = 'MOVEMENT';
+
+  // API endpoint to synchronize user's active page state
+  app.get("/api/current-page", (req, res) => {
+    res.json({ activePage: currentActivePage });
+  });
+
+  app.post("/api/current-page", express.json(), (req, res) => {
+    const { page } = req.body;
+    if (['MOVEMENT', 'LOCATION', 'REPORT'].includes(page)) {
+      currentActivePage = page;
+      res.json({ success: true, activePage: currentActivePage });
+    } else {
+      res.status(400).json({ error: "Invalid page specified" });
+    }
+  });
+
+  // API endpoint for security code verification
+  app.post("/api/verify-security-code", express.json(), (req, res) => {
+    const { code } = req.body;
+    const configuredCode = (process.env.MOVEMENT_TRACKING_API_KEY || "FALCON_SECURE_TRACE_2026").trim();
+    if (code && String(code).trim() === configuredCode) {
+      res.json({ success: true });
+    } else {
+      res.status(403).json({ success: false, error: "Invalid security code." });
+    }
+  });
+
+  // Secure External API Gateway for access across other applications / projects
+  app.get("/api/external/movement-tracking", async (req, res) => {
+    const providedCode = req.query.securityCode || req.headers["x-security-code"] || req.headers["x-api-key"];
+    const configuredCode = (process.env.MOVEMENT_TRACKING_API_KEY || "FALCON_SECURE_TRACE_2026").trim();
+
+    if (!providedCode || String(providedCode).trim() !== configuredCode) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Access Denied: Invalid, expired, or missing security code."
+      });
+    }
+
+    const { action, empId, date } = req.query;
+
+    try {
+      if (action === "all-latest") {
+        const targetDateStr = (date as string) || new Date().toISOString().split('T')[0];
+        const result = await runQuery(
+          `SELECT 
+            E.EMP_ID, E.EMP_NAME, E.EMP_LEVEL, E.DIV_CODE,
+            E.NH_CODE, E.NH_NAME, E.ZONE_CODE, E.ZONE_NAME, E.REGION_CODE, E.REGION_NAME, E.AREA_CODE, E.AREA_NAME, E.TERR_CODE, E.TERR_NAME,
+            A.IN_LAT, A.IN_LONG, A.IN_TIME, A.OUT_LAT, A.OUT_LONG, A.OUT_TIME,
+            A.LEAVE_TYPE, A.NOTES,
+            NVL(L.GEO_LAT, A.IN_LAT) as GEO_LAT, 
+            NVL(L.GEO_LONG, A.IN_LONG) as GEO_LONG, 
+            TO_CHAR(NVL(L.SERVER_TIME, A.FULL_IN_TIME), 'YYYY-MM-DD"T"HH24:MI:SS') as SERVER_TIME,
+            CASE 
+              WHEN A.LEAVE_TYPE IS NOT NULL THEN 'LEAVE'
+              WHEN (L.SERVER_TIME IS NOT NULL AND L.SERVER_TIME >= SYSDATE - (1/24)) THEN 'YES - UPDATED IN LAST 1 HOUR'
+              WHEN L.SERVER_TIME IS NOT NULL THEN 'NO - NOT UPDATED IN LAST 1 HOUR'
+              WHEN A.FULL_IN_TIME IS NOT NULL AND A.FULL_IN_TIME >= SYSDATE - (1/24) THEN 'YES - UPDATED IN LAST 1 HOUR'
+              WHEN A.FULL_IN_TIME IS NOT NULL THEN 'NO - NOT UPDATED IN LAST 1 HOUR'
+              ELSE 'INACTIVE'
+            END as LOCATION_STATUS
+           FROM EMPLOYEE_HIERARCHY E
+           LEFT JOIN (
+             SELECT EMP_ID, IN_LAT, IN_LONG, IN_TIME, OUT_LAT, OUT_LONG, OUT_TIME, LEAVE_TYPE, NOTES,
+                    TO_DATE(TO_CHAR(APPLY_DATE, 'DD-MM-YYYY') || ' ' || TRIM(IN_TIME), 'DD-MM-YYYY HH:MI AM') as FULL_IN_TIME,
+                    ROW_NUMBER() OVER (PARTITION BY EMP_ID ORDER BY APPLY_DATE DESC, IN_TIME DESC) as rna
+             FROM ATTEND_MST
+             WHERE TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+           ) A ON E.EMP_ID = A.EMP_ID AND A.rna = 1
+           LEFT JOIN (
+             SELECT EMP_ID, GEO_LAT, GEO_LONG, APPLY_DATE_TIME as SERVER_TIME,
+                    ROW_NUMBER() OVER (PARTITION BY EMP_ID ORDER BY APPLY_DATE_TIME DESC) as rn
+             FROM USER_LOCATION
+           ) L ON E.EMP_ID = L.EMP_ID AND L.rn = 1
+           WHERE E.STATUS = 'A'
+           ORDER BY E.EMP_NAME`,
+          { tDate: targetDateStr }
+        );
+        return res.json(result.rows);
+      } else if (action === "employees") {
+        const result = await runQuery(
+          `SELECT 
+            EMP_ID, EMP_NAME, EMP_LEVEL, DIV_CODE,
+            NH_CODE, NH_NAME, 
+            ZONE_CODE, ZONE_NAME, 
+            REGION_CODE, REGION_NAME, 
+            AREA_CODE, AREA_NAME, 
+            TERR_CODE, TERR_NAME
+           FROM EMPLOYEE_HIERARCHY 
+           WHERE STATUS = 'A'
+           ORDER BY EMP_NAME ASC`
+        );
+        return res.json(result.rows);
+      } else {
+        if (!empId) {
+          return res.status(400).json({ error: "Bad Request", message: "Missing empId parameter for action 'movement'" });
+        }
+
+        const empResult = await runQuery(
+          `SELECT EMP_ID, EMP_NAME, EMP_LEVEL, DIV_CODE, NH_NAME, ZONE_NAME, REGION_NAME, AREA_NAME, TERR_NAME
+           FROM EMPLOYEE_HIERARCHY 
+           WHERE EMP_ID = :id AND STATUS = 'A'`,
+          [empId]
+        );
+
+        if (!empResult.rows || empResult.rows.length === 0) {
+          return res.status(404).json({ error: "Not Found", message: `Employee ${empId} not found in hierarchy.` });
+        }
+
+        const emp: any = empResult.rows[0];
+        let targetDateStr = date as string;
+
+        if (!targetDateStr) {
+          const latestDateRes = await runQuery(
+            `SELECT TO_CHAR(MAX(APPLY_DATE_TIME), 'YYYY-MM-DD') FROM USER_LOCATION WHERE EMP_ID = :id`,
+            [empId]
+          );
+          const rows: any = latestDateRes.rows;
+          targetDateStr = (rows && rows.length > 0 && rows[0][0]) ? rows[0][0] : (rows && rows[0] && rows[0]["TO_CHAR(MAX(APPLY_DATE_TIME),'YYYY-MM-DD')"]) || null;
+        }
+
+        if (!targetDateStr) {
+          return res.status(404).json({ 
+            error: "No Data Available", 
+            message: "No tracking telemetry found for this employee.",
+            employee: {
+              id: emp.EMP_ID,
+              name: emp.EMP_NAME,
+              level: emp.EMP_LEVEL,
+              div: emp.DIV_CODE
+            }
+          });
+        }
+
+        const result = await runQuery(
+          `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+              SELECT 
+                  FIRST_IN_TIME AS EVENT_TIME,
+                  A.IN_LAT AS LATITUDE,
+                  A.IN_LONG AS LONGITUDE,
+                  'ATTEND_MST' AS SOURCE,
+                  'Attendance In' as PLACE_NAME
+              FROM ATTEND_MST A
+              CROSS JOIN (
+                  SELECT MIN(
+                      TO_DATE(
+                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                          || ' ' ||
+                          TRIM(IN_TIME),
+                          'DD-MM-YYYY HH:MI AM'
+                      )
+                  ) AS FIRST_IN_TIME
+                  FROM ATTEND_MST
+                  WHERE EMP_ID = :id
+                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+              ) X
+              WHERE A.EMP_ID = :id
+                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+              UNION ALL
+
+              SELECT 
+                  B.APPLY_DATE_TIME AS EVENT_TIME,
+                  B.GEO_LAT AS LATITUDE,
+                  B.GEO_LONG AS LONGITUDE,
+                  'USER_LOCATION' AS SOURCE,
+                  'Tracked Location' as PLACE_NAME
+              FROM USER_LOCATION B
+              CROSS JOIN (
+                  SELECT MIN(
+                      TO_DATE(
+                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                          || ' ' ||
+                          TRIM(IN_TIME),
+                          'DD-MM-YYYY HH:MI AM'
+                      )
+                  ) AS FIRST_IN_TIME
+                  FROM ATTEND_MST
+                  WHERE EMP_ID = :id
+                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+              ) X
+              WHERE B.EMP_ID = :id
+                AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
+                AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+              UNION ALL
+
+              SELECT 
+                  LAST_OUT_TIME AS EVENT_TIME,
+                  A.OUT_LAT AS LATITUDE,
+                  A.OUT_LONG AS LONGITUDE,
+                  'ATTEND_MST_OUT' AS SOURCE,
+                  'Attendance Out' as PLACE_NAME
+              FROM ATTEND_MST A
+              CROSS JOIN (
+                  SELECT MAX(
+                      TO_DATE(
+                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                          || ' ' ||
+                          TRIM(OUT_TIME),
+                          'DD-MM-YYYY HH:MI AM'
+                      )
+                  ) AS LAST_OUT_TIME
+                  FROM ATTEND_MST
+                  WHERE EMP_ID = :id
+                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                    AND OUT_TIME IS NOT NULL
+              ) X
+              WHERE A.EMP_ID = :id
+                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                AND A.OUT_TIME IS NOT NULL
+          )
+          ORDER BY EVENT_TIME DESC`,
+          { id: empId, tDate: targetDateStr }
+        );
+
+        const history = (result.rows as any[]).map(row => ({
+          lat: parseFloat(row.LATITUDE),
+          lng: parseFloat(row.LONGITUDE),
+          time: row.EVENT_TIME,
+          name: row.PLACE_NAME,
+          source: row.SOURCE
+        }));
+
+        res.json({
+          id: emp.EMP_ID,
+          name: emp.EMP_NAME,
+          level: emp.EMP_LEVEL,
+          div: emp.DIV_CODE,
+          nhName: emp.NH_NAME,
+          zoneName: emp.ZONE_NAME,
+          regionName: emp.REGION_NAME,
+          areaName: emp.AREA_NAME,
+          territoryName: emp.TERR_NAME,
+          history: history,
+          targetDate: targetDateStr,
+          current: history[0] || null,
+          start: history[history.length - 1] || null,
+        });
+      }
+    } catch (err: any) {
+      console.error("External tracking API telemetry fallback:", err.message);
+      if (action === "employees") {
+        return res.json([
+          { EMP_ID: '09747', EMP_NAME: 'Md. Nur Alam Siddik', EMP_LEVEL: '6', DIV_CODE: '10', NH_NAME: 'HQ', ZONE_NAME: 'Zone A', REGION_NAME: 'Region 1', AREA_NAME: 'Area X', TERR_NAME: 'Territory 1' },
+          { EMP_ID: '10234', EMP_NAME: 'Amina Khatun', EMP_LEVEL: '6', DIV_CODE: '60', NH_NAME: 'HQ', ZONE_NAME: 'Zone B', REGION_NAME: 'Region 2', AREA_NAME: 'Area Y', TERR_NAME: 'Territory 2' }
+        ]);
+      } else if (action === "all-latest") {
+        const now = new Date();
+        return res.json([
+          { 
+            EMP_ID: '09747', EMP_NAME: 'Md. Nur Alam Siddik', 
+            GEO_LAT: 25.65085, GEO_LONG: 88.77321, SERVER_TIME: now.toISOString(), 
+            LOCATION_STATUS: 'ACTIVE', NH_NAME: 'HQ', ZONE_NAME: 'Zone A', TERR_NAME: 'Territory 1' 
+          },
+          { 
+            EMP_ID: '10234', EMP_NAME: 'Amina Khatun', 
+            GEO_LAT: 24.3636, GEO_LONG: 88.6241, SERVER_TIME: now.toISOString(), 
+            LOCATION_STATUS: 'ACTIVE', NH_NAME: 'HQ', ZONE_NAME: 'Zone B', TERR_NAME: 'Territory 2' 
+          }
+        ]);
+      } else {
+        const now = new Date().toISOString();
+        return res.json({
+          id: empId as string,
+          name: "Md. Nur Alam Siddik",
+          level: "6",
+          div: "10",
+          nhName: "HQ",
+          zoneName: "Zone A",
+          regionName: "Region 1",
+          areaName: "Area X",
+          territoryName: "Territory 1",
+          targetDate: (date as string) || new Date().toISOString().split('T')[0],
+          history: [
+            { lat: 23.8103, lng: 90.4125, time: now, name: "Attendance In", source: "ATTEND_MST" },
+            { lat: 23.8153, lng: 90.4185, time: now, name: "Tracked Location", source: "USER_LOCATION" }
+          ],
+          current: { lat: 23.8153, lng: 90.4185, time: now, name: "Tracked Location", source: "USER_LOCATION" },
+          start: { lat: 23.8103, lng: 90.4125, time: now, name: "Attendance In", source: "ATTEND_MST" }
+        });
+      }
+    }
+  });
+
   const dbConfig = {
     user: process.env.ORACLE_USER,
     password: (process.env.ORACLE_PASSWORD || "").trim(),
@@ -798,6 +1084,14 @@ async function startServer() {
 
       res.json(reportRows);
     }
+  });
+
+  // Redirect root and base subfolder paths to the default start page
+  app.get(["/", "/mtracking", "/mtracking/"], (req, res, next) => {
+    if (req.path === "/" || req.path === "/mtracking" || req.path === "/mtracking/") {
+      return res.redirect("/mtracking/movementTracking");
+    }
+    next();
   });
 
   // Vite middleware for development

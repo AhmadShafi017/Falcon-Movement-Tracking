@@ -76,4 +76,53 @@ npm run start
 ```
 
 ---
+
+## 🔀 Unified Subfolder Routing (`/mtracking`)
+
+To simplify local hosting and allow hosting alongside other existing projects under a shared domain, all system modules are mounted under a common subfolder prefix.
+
+*   🌐 **Root Auto-Redirect:** Visiting the bare URL `http://localhost:3000/` or `http://localhost:3000/mtracking` automatically redirects with high compatibility to the correct default workspace.
+*   🗺️ **Telemetry Map Module:** `http://localhost:3000/mtracking/movementTracking`
+*   🚨 **Field Monitoring Module:** `http://localhost:3000/mtracking/currentLocation`
+*   📊 **Operational Reports Module:** `http://localhost:3000/mtracking/operationalReport`
+
+---
+
+## 🔒 Security & Third-Party Integration API
+
+To securely integrate Falcon's movement tracking data with other external projects, a dedicated secure gateway is exposed at `/api/external/movement-tracking`.
+
+### 1. Security Enforcement
+All external requests must include a security code. You can customize this code via the `MOVEMENT_TRACKING_API_KEY` setting in your `.env` file. If no key is set, it defaults to `FALCON_SECURE_TRACE_2026`.
+
+Authentication is supported via:
+*   🔑 A **Header**: `X-Security-Code` or `X-API-Key`
+*   🔗 A **Query Parameter**: `?securityCode=YOUR_CODE_HERE`
+
+If the security code is missing or incorrect, the server replies with a `403 Forbidden` response:
+```json
+{
+  "error": "Forbidden",
+  "message": "Access Denied: Invalid, expired, or missing security code."
+}
+```
+
+### 2. Supported Telemetry Actions
+
+#### A. Fetch Employee Hierarchy
+Retrieve the full live registry of active personnel.
+*   **Endpoint:** `/api/external/movement-tracking?action=employees`
+*   **Method:** `GET`
+
+#### B. Fetch All Latest Live Positions
+Get current active coordinates & heartbeats of all field personnel.
+*   **Endpoint:** `/api/external/movement-tracking?action=all-latest&date=YYYY-MM-DD`
+*   **Method:** `GET`
+
+#### C. Fetch Detailed Movement Path Chronology
+Fetch path history, origins, and terminals for an individual target employee.
+*   **Endpoint:** `/api/external/movement-tracking?action=movement&empId=09747&date=YYYY-MM-DD`
+*   **Method:** `GET`
+
+---
 *Engineered for high-volume enterprise logistics and field-force telemetry management.*

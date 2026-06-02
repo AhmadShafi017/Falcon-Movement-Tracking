@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, KeyRound, ShieldAlert, Lock } from 'lucide-react';
 import { Header } from './components/Header';
 import { MovementPage } from './pages/MovementPage';
 import { LocationPage } from './pages/LocationPage';
@@ -9,7 +9,169 @@ import { Employee, LocationData, MovementPoint } from './types';
 import { getEmployeeStatus } from './utils/formatters';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'MOVEMENT' | 'LOCATION' | 'REPORT'>('MOVEMENT');
+  const [currentPage, setCurrentPageState] = useState<'MOVEMENT' | 'LOCATION' | 'REPORT'>('MOVEMENT');
+  const [isAuthorized, setIsAuthorized] = useState<boolean | 'checking'>('checking');
+  const [manualCodeInput, setManualCodeInput] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  const PAGE_PATHS = {
+    MOVEMENT: '/mtracking/movementTracking',
+    LOCATION: '/mtracking/currentLocation',
+    REPORT: '/mtracking/operationalReport'
+  };
+
+  const setCurrentPage = async (page: 'MOVEMENT' | 'LOCATION' | 'REPORT') => {
+    try {
+      const res = await fetch('/api/current-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const active = data.activePage as 'MOVEMENT' | 'LOCATION' | 'REPORT' || page;
+        setCurrentPageState(active);
+        const newPath = PAGE_PATHS[active];
+        if (window.location.pathname !== newPath) {
+          window.history.pushState(null, '', newPath);
+        }
+      } else {
+        setCurrentPageState(page);
+        const newPath = PAGE_PATHS[page];
+        if (window.location.pathname !== newPath) {
+          window.history.pushState(null, '', newPath);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to synchronize active page state over API:", err);
+      setCurrentPageState(page);
+      const newPath = PAGE_PATHS[page];
+      if (window.location.pathname !== newPath) {
+        window.history.pushState(null, '', newPath);
+      }
+    }
+  };
+
+  useEffect(() => {
+    // 1. Check URL query parameters for securityCode
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get('securityCode');
+
+    if (codeParam) {
+      // Clean query parameter instataneous to hide it from URL bar
+      urlParams.delete('securityCode');
+      const newSearch = urlParams.toString();
+      const cleanUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+      window.history.replaceState(null, '', cleanUrl);
+
+      // Verify the code securely against the server
+      fetch('/api/verify-security-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeParam })
+      })
+        .then(res => {
+          if (res.ok) {
+            sessionStorage.setItem('falcon_authorized', 'true');
+            setIsAuthorized(true);
+          } else {
+            sessionStorage.removeItem('falcon_authorized');
+            setIsAuthorized(false);
+          }
+        })
+        .catch(err => {
+          console.error("Auth check failed:", err);
+          setIsAuthorized(false);
+        });
+    } else {
+      // 2. Check cached browser session state
+      const isAuthCached = sessionStorage.getItem('falcon_authorized') === 'true';
+      if (isAuthCached) {
+        setIsAuthorized(true);
+      } else {
+        setIsAuthorized(false);
+      }
+    }
+  }, []);
+
+  const handleManualUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualCodeInput.trim()) {
+      setAuthError('Please enter a security code.');
+      return;
+    }
+    try {
+      setAuthError('');
+      const res = await fetch('/api/verify-security-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: manualCodeInput })
+      });
+      if (res.ok) {
+        sessionStorage.setItem('falcon_authorized', 'true');
+        setIsAuthorized(true);
+      } else {
+        setAuthError('Invalid system security key. Access denied.');
+      }
+    } catch (err) {
+      setAuthError('Unable to connect to security server.');
+    }
+  };
+
+  useEffect(() => {
+    // Determine the page routing state based on the current browser path
+    const path = window.location.pathname;
+    let initialPage: 'MOVEMENT' | 'LOCATION' | 'REPORT' = 'MOVEMENT';
+    if (path.includes('location') || path.includes('LOCATION') || path.includes('current-location')) {
+      initialPage = 'LOCATION';
+    } else if (path.includes('report') || path.includes('REPORT') || path.includes('operational-report')) {
+      initialPage = 'REPORT';
+    }
+
+    fetch('/api/current-page')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error();
+      })
+      .then(data => {
+        const activePage = (data.activePage || initialPage) as 'MOVEMENT' | 'LOCATION' | 'REPORT';
+        setCurrentPageState(activePage);
+        const correctPath = PAGE_PATHS[activePage];
+        if (window.location.pathname !== correctPath) {
+          window.history.replaceState(null, '', correctPath);
+        }
+      })
+      .catch(err => {
+        console.warn("Could not retrieve current active page state on load, using path-resolved page:", err);
+        setCurrentPageState(initialPage);
+        const correctPath = PAGE_PATHS[initialPage];
+        if (window.location.pathname !== correctPath) {
+          window.history.replaceState(null, '', correctPath);
+        }
+      });
+  }, []);
+
+  // Listen to popstate event (browser back & forward clicks) to change pages in sync
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      let targetPage: 'MOVEMENT' | 'LOCATION' | 'REPORT' = 'MOVEMENT';
+      if (path.includes('location') || path.includes('LOCATION') || path.includes('current-location')) {
+        targetPage = 'LOCATION';
+      } else if (path.includes('report') || path.includes('REPORT') || path.includes('operational-report')) {
+        targetPage = 'REPORT';
+      }
+      setCurrentPageState(targetPage);
+      // Synchronize the change to the back-end
+      fetch('/api/current-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: targetPage })
+      }).catch(err => console.warn("Failed to synchronize active page on history navigation:", err));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [location, setLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; instruction?: string; locked?: boolean } | null>(null);
@@ -171,6 +333,47 @@ export default function App() {
     syncHierarchy, showHospitals, setShowHospitals, showCustomers, setShowCustomers, pois, setPois, setPoiLoading,
     statusFilter, setStatusFilter
   };
+
+  if (isAuthorized === 'checking') {
+    return (
+      <div className="h-screen w-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin mb-4" />
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest animate-pulse">Initializing System Authorization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="h-screen w-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+        <div className="w-full max-w-md bg-white border border-slate-200 shadow-2xl rounded-3xl p-8 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-red-500" />
+          
+          <div className="flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6 border border-red-100">
+              <ShieldAlert size={28} />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-1">SECURITY MISMATCH</h3>
+            <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-6">Access Denied: Invalid Security Code</p>
+            
+            <p className="text-xs text-slate-600 leading-relaxed mb-6">
+              The provided security key is invalid, expired, or missing. To display and synchronize this telemetry monitoring dashboard, please supply the correct <code className="bg-slate-100 px-1.5 py-0.5 rounded text-red-600 font-mono text-[10px]">securityCode</code> in your URL query:
+            </p>
+
+            <div className="w-full bg-slate-50 border border-slate-100 p-4 rounded-xl text-left font-mono text-[11px] text-slate-500 leading-relaxed break-all">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wide">Expected Access Pattern:</span><br/>
+              <span className="text-slate-800 font-medium select-all">
+                {window.location.origin}/mtracking/movementTracking?securityCode=<b>YOUR_CODE</b>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-white text-slate-900 font-sans">
