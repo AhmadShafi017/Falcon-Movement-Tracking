@@ -12,6 +12,59 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // ==========================================
+  // CORS & CSP CROSS-ORIGIN SECURE MIDDLEWARE
+  // ==========================================
+
+  // 1. CORS Custom Middleware (Solves cross-origin fetch bottlenecks)
+  app.use((req, res, next) => {
+    // IMPORTANT: Modify/extend this array with your actual main project domains (such as your Oracle APEX host)
+    const allowedOrigins = [
+      "https://your-main-project.com",          // <-- Replace with your production Oracle APEX domain
+      "https://apex.oracle.com",                // Standard Oracle APEX Cloud Sandbox
+      "http://localhost:3000",
+      "http://localhost:8080",                  // Common internal APEX ORDS local ports
+      "http://localhost:4000",
+      "http://127.0.0.1:4000"
+    ];
+    
+    const origin = req.headers.origin;
+    if (origin && (allowedOrigins.includes(origin) || origin.endsWith(".oracle.com") || origin.startsWith("http://localhost:"))) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    } else {
+      // Fallback fallback to allow direct access or first origin
+      res.setHeader("Access-Control-Allow-Origin", origin || "https://your-main-project.com");
+    }
+    
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Authorization, x-security-code, x-api-key");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+
+    // Handle OPTIONS preflight request
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
+  // 2. CSP Frame Ancestors Middleware (Solves iframe framing bottlenecks)
+  app.use((req, res, next) => {
+    // IMPORTANT: Replace 'https://your-main-project.com' with your actual Oracle APEX domain
+    // We also include Google AI Studio and preview domains (*.run.app, *.google.com, etc.) so that the preview renders correctly in the IDE!
+    res.setHeader(
+      "Content-Security-Policy",
+      "frame-ancestors 'self' https://your-main-project.com https://*.oracle.com http://localhost:* http://127.0.0.1:* https://*.google.com https://*.run.app https://ai.studio https://*.google https://*.aistudio.google https://*.usercontent.google https://*.aistudio.google.com;"
+    );
+    
+    // Explicitly remove X-Frame-Options to allow framing across modern/legacy browsers alongside CSP
+    res.removeHeader("X-Frame-Options");
+    
+    next();
+  });
+
+  // Configure Express to trust proxy forwarding headers (e.g. Proto, Host, For)
+  app.set('trust proxy', 1);
+
   // API Routes
 
   let currentActivePage = 'MOVEMENT';

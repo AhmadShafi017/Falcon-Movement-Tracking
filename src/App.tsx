@@ -10,7 +10,7 @@ import { getEmployeeStatus } from './utils/formatters';
 
 export default function App() {
   const [currentPage, setCurrentPageState] = useState<'MOVEMENT' | 'LOCATION' | 'REPORT'>('MOVEMENT');
-  const [isAuthorized, setIsAuthorized] = useState<boolean | 'checking'>('checking');
+  const [isAuthorized, setIsAuthorized] = useState<boolean | 'checking'>(true);
   const [manualCodeInput, setManualCodeInput] = useState('');
   const [authError, setAuthError] = useState('');
 
@@ -53,45 +53,20 @@ export default function App() {
   };
 
   useEffect(() => {
-    // 1. Check URL query parameters for securityCode
+    // 1. Check URL query parameters for securityCode to strip it to keep URL clean
     const urlParams = new URLSearchParams(window.location.search);
     const codeParam = urlParams.get('securityCode');
 
     if (codeParam) {
-      // Clean query parameter instataneous to hide it from URL bar
+      // Clean query parameter instantaneously to hide it from URL bar and make it only URL without securityCode
       urlParams.delete('securityCode');
       const newSearch = urlParams.toString();
       const cleanUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
       window.history.replaceState(null, '', cleanUrl);
-
-      // Verify the code securely against the server
-      fetch('/api/verify-security-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: codeParam })
-      })
-        .then(res => {
-          if (res.ok) {
-            sessionStorage.setItem('falcon_authorized', 'true');
-            setIsAuthorized(true);
-          } else {
-            sessionStorage.removeItem('falcon_authorized');
-            setIsAuthorized(false);
-          }
-        })
-        .catch(err => {
-          console.error("Auth check failed:", err);
-          setIsAuthorized(false);
-        });
-    } else {
-      // 2. Check cached browser session state
-      const isAuthCached = sessionStorage.getItem('falcon_authorized') === 'true';
-      if (isAuthCached) {
-        setIsAuthorized(true);
-      } else {
-        setIsAuthorized(false);
-      }
     }
+    
+    // Always authorize access directly
+    setIsAuthorized(true);
   }, []);
 
   const handleManualUnlockSubmit = async (e: React.FormEvent) => {
