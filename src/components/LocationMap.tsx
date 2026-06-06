@@ -151,9 +151,11 @@ export const LocationMap: React.FC<LocationMapProps> = ({
 
         const isSelected = selectedEmpId === gl.EMP_ID;
         const iconColor = 
+          status === 'unauthorized_leave' ? '#EC4899' :
+          status === 'leave' ? '#EF4444' :
           status === 'active' ? '#10b981' : 
           status === 'hibernate' ? '#f59e0b' : 
-          '#f43f5e';
+          '#EF4444';
         
         const iconToUse = createPinIcon(iconColor, isSelected);
 
@@ -174,9 +176,10 @@ export const LocationMap: React.FC<LocationMapProps> = ({
               <div className="p-4 min-w-[280px] space-y-4">
                 <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
                   <div className={`w-3.5 h-3.5 rounded-full ring-4 ${
+                    status === 'unauthorized_leave' ? 'bg-pink-500 ring-pink-100' :
                     status === 'active' ? 'bg-emerald-500 ring-emerald-100' : 
                     status === 'hibernate' ? 'bg-amber-500 ring-amber-100' : 
-                    status === 'leave' ? 'bg-rose-500 ring-rose-100' :
+                    status === 'leave' ? 'bg-red-500 ring-red-100' :
                     'bg-slate-300 ring-slate-100'
                   }`} />
                   <div>
@@ -184,6 +187,13 @@ export const LocationMap: React.FC<LocationMapProps> = ({
                     <p className="text-[10px] font-bold text-slate-400 font-mono italic tracking-wider">ID: {gl.EMP_ID}</p>
                   </div>
                 </div>
+
+                {status === 'unauthorized_leave' && (
+                  <div className="bg-pink-50 border border-pink-100 text-pink-700 p-2.5 text-[10px] font-bold rounded-lg leading-relaxed">
+                    🚨 STATUS: UNAUTHORIZED LEAVE<br/>
+                    <span className="font-medium text-pink-600">Location pulled from last known historical position.</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">

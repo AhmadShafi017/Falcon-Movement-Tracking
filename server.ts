@@ -118,16 +118,12 @@ async function startServer() {
             E.NH_CODE, E.NH_NAME, E.ZONE_CODE, E.ZONE_NAME, E.REGION_CODE, E.REGION_NAME, E.AREA_CODE, E.AREA_NAME, E.TERR_CODE, E.TERR_NAME,
             A.IN_LAT, A.IN_LONG, A.IN_TIME, A.OUT_LAT, A.OUT_LONG, A.OUT_TIME,
             A.LEAVE_TYPE, A.NOTES,
-            NVL(L.GEO_LAT, A.IN_LAT) as GEO_LAT, 
-            NVL(L.GEO_LONG, A.IN_LONG) as GEO_LONG, 
-            TO_CHAR(NVL(L.SERVER_TIME, A.FULL_IN_TIME), 'YYYY-MM-DD"T"HH24:MI:SS') as SERVER_TIME,
+            COALESCE(A.IN_LAT, L.GEO_LAT) as GEO_LAT, 
+            COALESCE(A.IN_LONG, L.GEO_LONG) as GEO_LONG, 
+            TO_CHAR(COALESCE(A.FULL_IN_TIME, L.SERVER_TIME), 'YYYY-MM-DD"T"HH24:MI:SS') as SERVER_TIME,
             CASE 
-              WHEN A.LEAVE_TYPE IS NOT NULL THEN 'LEAVE'
-              WHEN (L.SERVER_TIME IS NOT NULL AND L.SERVER_TIME >= SYSDATE - (1/24)) THEN 'YES - UPDATED IN LAST 1 HOUR'
-              WHEN L.SERVER_TIME IS NOT NULL THEN 'NO - NOT UPDATED IN LAST 1 HOUR'
-              WHEN A.FULL_IN_TIME IS NOT NULL AND A.FULL_IN_TIME >= SYSDATE - (1/24) THEN 'YES - UPDATED IN LAST 1 HOUR'
-              WHEN A.FULL_IN_TIME IS NOT NULL THEN 'NO - NOT UPDATED IN LAST 1 HOUR'
-              ELSE 'INACTIVE'
+              WHEN A.EMP_ID IS NULL THEN 'UNAUTHORIZED LEAVE'
+              ELSE 'ACTIVE TRACKING'
             END as LOCATION_STATUS
            FROM EMPLOYEE_HIERARCHY E
            LEFT JOIN (
@@ -202,87 +198,118 @@ async function startServer() {
           });
         }
 
-        const result = await runQuery(
-          `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
-              SELECT 
-                  FIRST_IN_TIME AS EVENT_TIME,
-                  A.IN_LAT AS LATITUDE,
-                  A.IN_LONG AS LONGITUDE,
-                  'ATTEND_MST' AS SOURCE,
-                  'Attendance In' as PLACE_NAME
-              FROM ATTEND_MST A
-              CROSS JOIN (
-                  SELECT MIN(
-                      TO_DATE(
-                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                          || ' ' ||
-                          TRIM(IN_TIME),
-                          'DD-MM-YYYY HH:MI AM'
-                      )
-                  ) AS FIRST_IN_TIME
-                  FROM ATTEND_MST
-                  WHERE EMP_ID = :id
-                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-              ) X
-              WHERE A.EMP_ID = :id
-                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-
-              UNION ALL
-
-              SELECT 
-                  B.APPLY_DATE_TIME AS EVENT_TIME,
-                  B.GEO_LAT AS LATITUDE,
-                  B.GEO_LONG AS LONGITUDE,
-                  'USER_LOCATION' AS SOURCE,
-                  'Tracked Location' as PLACE_NAME
-              FROM USER_LOCATION B
-              CROSS JOIN (
-                  SELECT MIN(
-                      TO_DATE(
-                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                          || ' ' ||
-                          TRIM(IN_TIME),
-                          'DD-MM-YYYY HH:MI AM'
-                      )
-                  ) AS FIRST_IN_TIME
-                  FROM ATTEND_MST
-                  WHERE EMP_ID = :id
-                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-              ) X
-              WHERE B.EMP_ID = :id
-                AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
-                AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
-
-              UNION ALL
-
-              SELECT 
-                  LAST_OUT_TIME AS EVENT_TIME,
-                  A.OUT_LAT AS LATITUDE,
-                  A.OUT_LONG AS LONGITUDE,
-                  'ATTEND_MST_OUT' AS SOURCE,
-                  'Attendance Out' as PLACE_NAME
-              FROM ATTEND_MST A
-              CROSS JOIN (
-                  SELECT MAX(
-                      TO_DATE(
-                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                          || ' ' ||
-                          TRIM(OUT_TIME),
-                          'DD-MM-YYYY HH:MI AM'
-                      )
-                  ) AS LAST_OUT_TIME
-                  FROM ATTEND_MST
-                  WHERE EMP_ID = :id
-                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-                    AND OUT_TIME IS NOT NULL
-              ) X
-              WHERE A.EMP_ID = :id
-                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-                AND A.OUT_TIME IS NOT NULL
-          )
-          ORDER BY EVENT_TIME DESC`,
+        let result;
+        // Check if there is any attendance record for this emp on targetDate
+        const attendCheck = await runQuery(
+          `SELECT COUNT(*) as CNT FROM ATTEND_MST WHERE EMP_ID = :id AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')`,
           { id: empId, tDate: targetDateStr }
         );
+        
+        const countVal = (attendCheck.rows && (attendCheck.rows[0] as any).CNT) ? parseInt((attendCheck.rows[0] as any).CNT) : 
+                         (attendCheck.rows && (attendCheck.rows[0] as any)[0] ? parseInt((attendCheck.rows[0] as any)[0]) : 0);
+
+        if (countVal > 0) {
+          result = await runQuery(
+            `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+                -- FIRST ATTENDANCE
+                SELECT 
+                    FIRST_IN_TIME AS EVENT_TIME,
+                    A.IN_LAT AS LATITUDE,
+                    A.IN_LONG AS LONGITUDE,
+                    'ATTEND_MST' AS SOURCE,
+                    'Attendance In' as PLACE_NAME
+                FROM ATTEND_MST A
+                CROSS JOIN (
+                    SELECT MIN(
+                        TO_DATE(
+                            TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                            || ' ' ||
+                            TRIM(IN_TIME),
+                            'DD-MM-YYYY HH:MI AM'
+                        )
+                    ) AS FIRST_IN_TIME
+                    FROM ATTEND_MST
+                    WHERE EMP_ID = :id
+                      AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                ) X
+                WHERE A.EMP_ID = :id
+                  AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+                UNION ALL
+
+                -- USER LOCATION AFTER FIRST ATTENDANCE
+                SELECT 
+                    B.APPLY_DATE_TIME AS EVENT_TIME,
+                    B.GEO_LAT AS LATITUDE,
+                    B.GEO_LONG AS LONGITUDE,
+                    'USER_LOCATION' AS SOURCE,
+                    'Tracked Location' as PLACE_NAME
+                FROM USER_LOCATION B
+                CROSS JOIN (
+                    SELECT MIN(
+                        TO_DATE(
+                            TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                            || ' ' ||
+                            TRIM(IN_TIME),
+                            'DD-MM-YYYY HH:MI AM'
+                        )
+                    ) AS FIRST_IN_TIME
+                    FROM ATTEND_MST
+                    WHERE EMP_ID = :id
+                      AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                ) X
+                WHERE B.EMP_ID = :id
+                  AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
+                  AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+                UNION ALL
+
+                -- LAST ATTENDANCE (OUT)
+                SELECT 
+                    LAST_OUT_TIME AS EVENT_TIME,
+                    A.OUT_LAT AS LATITUDE,
+                    A.OUT_LONG AS LONGITUDE,
+                    'ATTEND_MST_OUT' AS SOURCE,
+                    'Attendance Out' as PLACE_NAME
+                FROM ATTEND_MST A
+                CROSS JOIN (
+                    SELECT MAX(
+                        TO_DATE(
+                            TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                            || ' ' ||
+                            TRIM(OUT_TIME),
+                            'DD-MM-YYYY HH:MI AM'
+                        )
+                    ) AS LAST_OUT_TIME
+                    FROM ATTEND_MST
+                    WHERE EMP_ID = :id
+                      AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                      AND OUT_TIME IS NOT NULL
+                ) X
+                WHERE A.EMP_ID = :id
+                  AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                  AND A.OUT_TIME IS NOT NULL
+            )
+            ORDER BY EVENT_TIME ASC`,
+            { id: empId, tDate: targetDateStr }
+          );
+        } else {
+          // Fallback for unauthorized leave: pulling they key historical coordinates
+          result = await runQuery(
+            `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+                SELECT 
+                    APPLY_DATE_TIME AS EVENT_TIME,
+                    GEO_LAT AS LATITUDE,
+                    GEO_LONG AS LONGITUDE,
+                    'USER_LOCATION' AS SOURCE,
+                    'Last Known Location' as PLACE_NAME,
+                    ROW_NUMBER() OVER (PARTITION BY EMP_ID ORDER BY APPLY_DATE_TIME DESC) as rn
+                FROM USER_LOCATION
+                WHERE EMP_ID = :id
+            ) WHERE rn = 1`,
+            { id: empId }
+          );
+        }
 
         const history = (result.rows as any[]).map(row => ({
           lat: parseFloat(row.LATITUDE),
@@ -304,8 +331,8 @@ async function startServer() {
           territoryName: emp.TERR_NAME,
           history: history,
           targetDate: targetDateStr,
-          current: history[0] || null,
-          start: history[history.length - 1] || null,
+          current: history[history.length - 1] || null,
+          start: history[0] || null,
         });
       }
     } catch (err: any) {
@@ -684,90 +711,118 @@ async function startServer() {
       }
 
       // 3. Fetch movement data using the combined SQL logic provided (connects, executes, disconnects)
-      const result = await runQuery(
-        `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
-            -- FIRST ATTENDANCE
-            SELECT 
-                FIRST_IN_TIME AS EVENT_TIME,
-                A.IN_LAT AS LATITUDE,
-                A.IN_LONG AS LONGITUDE,
-                'ATTEND_MST' AS SOURCE,
-                'Attendance In' as PLACE_NAME
-            FROM ATTEND_MST A
-            CROSS JOIN (
-                SELECT MIN(
-                    TO_DATE(
-                        TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                        || ' ' ||
-                        TRIM(IN_TIME),
-                        'DD-MM-YYYY HH:MI AM'
-                    )
-                ) AS FIRST_IN_TIME
-                FROM ATTEND_MST
-                WHERE EMP_ID = :id
-                  AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-            ) X
-            WHERE A.EMP_ID = :id
-              AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-
-            UNION ALL
-
-            -- USER LOCATION AFTER FIRST ATTENDANCE
-            SELECT 
-                B.APPLY_DATE_TIME AS EVENT_TIME,
-                B.GEO_LAT AS LATITUDE,
-                B.GEO_LONG AS LONGITUDE,
-                'USER_LOCATION' AS SOURCE,
-                'Tracked Location' as PLACE_NAME
-            FROM USER_LOCATION B
-            CROSS JOIN (
-                SELECT MIN(
-                    TO_DATE(
-                        TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                        || ' ' ||
-                        TRIM(IN_TIME),
-                        'DD-MM-YYYY HH:MI AM'
-                    )
-                ) AS FIRST_IN_TIME
-                FROM ATTEND_MST
-                WHERE EMP_ID = :id
-                  AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-            ) X
-            WHERE B.EMP_ID = :id
-              AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
-              AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
-
-            UNION ALL
-
-            -- LAST ATTENDANCE (OUT)
-            SELECT 
-                LAST_OUT_TIME AS EVENT_TIME,
-                A.OUT_LAT AS LATITUDE,
-                A.OUT_LONG AS LONGITUDE,
-                'ATTEND_MST_OUT' AS SOURCE,
-                'Attendance Out' as PLACE_NAME
-            FROM ATTEND_MST A
-            CROSS JOIN (
-                SELECT MAX(
-                    TO_DATE(
-                        TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                        || ' ' ||
-                        TRIM(OUT_TIME),
-                        'DD-MM-YYYY HH:MI AM'
-                    )
-                ) AS LAST_OUT_TIME
-                FROM ATTEND_MST
-                WHERE EMP_ID = :id
-                  AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-                  AND OUT_TIME IS NOT NULL
-            ) X
-            WHERE A.EMP_ID = :id
-              AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-              AND A.OUT_TIME IS NOT NULL
-        )
-        ORDER BY EVENT_TIME DESC`,
+      let result;
+      // Check if there is any attendance record for this emp on targetDate
+      const attendCheck = await runQuery(
+        `SELECT COUNT(*) as CNT FROM ATTEND_MST WHERE EMP_ID = :id AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')`,
         { id: empId, tDate: targetDateStr }
       );
+      
+      const countVal = (attendCheck.rows && (attendCheck.rows[0] as any).CNT) ? parseInt((attendCheck.rows[0] as any).CNT) : 
+                       (attendCheck.rows && (attendCheck.rows[0] as any)[0] ? parseInt((attendCheck.rows[0] as any)[0]) : 0);
+
+      if (countVal > 0) {
+        result = await runQuery(
+          `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+              -- FIRST ATTENDANCE
+              SELECT 
+                  FIRST_IN_TIME AS EVENT_TIME,
+                  A.IN_LAT AS LATITUDE,
+                  A.IN_LONG AS LONGITUDE,
+                  'ATTEND_MST' AS SOURCE,
+                  'Attendance In' as PLACE_NAME
+              FROM ATTEND_MST A
+              CROSS JOIN (
+                  SELECT MIN(
+                      TO_DATE(
+                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                          || ' ' ||
+                          TRIM(IN_TIME),
+                          'DD-MM-YYYY HH:MI AM'
+                      )
+                  ) AS FIRST_IN_TIME
+                  FROM ATTEND_MST
+                  WHERE EMP_ID = :id
+                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+              ) X
+              WHERE A.EMP_ID = :id
+                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+              UNION ALL
+
+              -- USER LOCATION AFTER FIRST ATTENDANCE
+              SELECT 
+                  B.APPLY_DATE_TIME AS EVENT_TIME,
+                  B.GEO_LAT AS LATITUDE,
+                  B.GEO_LONG AS LONGITUDE,
+                  'USER_LOCATION' AS SOURCE,
+                  'Tracked Location' as PLACE_NAME
+              FROM USER_LOCATION B
+              CROSS JOIN (
+                  SELECT MIN(
+                      TO_DATE(
+                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                          || ' ' ||
+                          TRIM(IN_TIME),
+                          'DD-MM-YYYY HH:MI AM'
+                      )
+                  ) AS FIRST_IN_TIME
+                  FROM ATTEND_MST
+                  WHERE EMP_ID = :id
+                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+              ) X
+              WHERE B.EMP_ID = :id
+                AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
+                AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+              UNION ALL
+
+              -- LAST ATTENDANCE (OUT)
+              SELECT 
+                  LAST_OUT_TIME AS EVENT_TIME,
+                  A.OUT_LAT AS LATITUDE,
+                  A.OUT_LONG AS LONGITUDE,
+                  'ATTEND_MST_OUT' AS SOURCE,
+                  'Attendance Out' as PLACE_NAME
+              FROM ATTEND_MST A
+              CROSS JOIN (
+                  SELECT MAX(
+                      TO_DATE(
+                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                          || ' ' ||
+                          TRIM(OUT_TIME),
+                          'DD-MM-YYYY HH:MI AM'
+                      )
+                  ) AS LAST_OUT_TIME
+                  FROM ATTEND_MST
+                  WHERE EMP_ID = :id
+                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                    AND OUT_TIME IS NOT NULL
+              ) X
+              WHERE A.EMP_ID = :id
+                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                AND A.OUT_TIME IS NOT NULL
+          )
+          ORDER BY EVENT_TIME ASC`,
+          { id: empId, tDate: targetDateStr }
+        );
+      } else {
+        // Fallback for unauthorized leave: pulling they key historical coordinates
+        result = await runQuery(
+          `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+              SELECT 
+                  APPLY_DATE_TIME AS EVENT_TIME,
+                  GEO_LAT AS LATITUDE,
+                  GEO_LONG AS LONGITUDE,
+                  'USER_LOCATION' AS SOURCE,
+                  'Last Known Location' as PLACE_NAME,
+                  ROW_NUMBER() OVER (PARTITION BY EMP_ID ORDER BY APPLY_DATE_TIME DESC) as rn
+              FROM USER_LOCATION
+              WHERE EMP_ID = :id
+          ) WHERE rn = 1`,
+          { id: empId }
+        );
+      }
 
       const history = (result.rows as any[]).map(row => ({
         lat: parseFloat(row.LATITUDE),
@@ -789,8 +844,8 @@ async function startServer() {
         territoryName: emp.TERR_NAME,
         history: history,
         targetDate: targetDateStr,
-        current: history[0] || null,
-        start: history[history.length - 1] || null,
+        current: history[history.length - 1] || null,
+        start: history[0] || null,
       });
 
     } catch (err: any) {
@@ -811,16 +866,13 @@ async function startServer() {
           E.NH_CODE, E.NH_NAME, E.ZONE_CODE, E.ZONE_NAME, E.REGION_CODE, E.REGION_NAME, E.AREA_CODE, E.AREA_NAME, E.TERR_CODE, E.TERR_NAME,
           A.IN_LAT, A.IN_LONG, A.IN_TIME, A.OUT_LAT, A.OUT_LONG, A.OUT_TIME,
           A.LEAVE_TYPE, A.NOTES,
-          NVL(L.GEO_LAT, A.IN_LAT) as GEO_LAT, 
-          NVL(L.GEO_LONG, A.IN_LONG) as GEO_LONG, 
-          TO_CHAR(NVL(L.SERVER_TIME, A.FULL_IN_TIME), 'YYYY-MM-DD"T"HH24:MI:SS') as SERVER_TIME,
+          COALESCE(A.IN_LAT, L.GEO_LAT) as GEO_LAT, 
+          COALESCE(A.IN_LONG, L.GEO_LONG) as GEO_LONG, 
+          TO_CHAR(COALESCE(A.FULL_IN_TIME, L.SERVER_TIME), 'YYYY-MM-DD"T"HH24:MI:SS') as SERVER_TIME,
           CASE 
+            WHEN A.EMP_ID IS NULL THEN 'UNAUTHORIZED LEAVE'
             WHEN A.LEAVE_TYPE IS NOT NULL THEN 'LEAVE'
-            WHEN (L.SERVER_TIME IS NOT NULL AND L.SERVER_TIME >= SYSDATE - (1/24)) THEN 'YES - UPDATED IN LAST 1 HOUR'
-            WHEN L.SERVER_TIME IS NOT NULL THEN 'NO - NOT UPDATED IN LAST 1 HOUR'
-            WHEN A.FULL_IN_TIME IS NOT NULL AND A.FULL_IN_TIME >= SYSDATE - (1/24) THEN 'YES - UPDATED IN LAST 1 HOUR'
-            WHEN A.FULL_IN_TIME IS NOT NULL THEN 'NO - NOT UPDATED IN LAST 1 HOUR'
-            ELSE 'INACTIVE'
+            ELSE 'ACTIVE TRACKING'
           END as LOCATION_STATUS
          FROM EMPLOYEE_HIERARCHY E
          LEFT JOIN (
@@ -839,19 +891,66 @@ async function startServer() {
          ORDER BY E.EMP_NAME`,
         { tDate: targetDateStr }
       );
-      res.json(result.rows);
+
+      const employees = result.rows.map((row: any) => {
+        const emp = { ...row };
+        if (emp.LOCATION_STATUS === 'UNAUTHORIZED LEAVE') {
+          emp.LEAVE_TYPE_TAG = 'UNAUTHORIZED';
+          emp.LEAVE_TYPE = 'UNAUTHORIZED';
+        } else if (emp.LOCATION_STATUS === 'LEAVE' || emp.LEAVE_TYPE) {
+          emp.LEAVE_TYPE_TAG = 'AUTHORIZED';
+          emp.LEAVE_TYPE = emp.LEAVE_TYPE || 'AUTHORIZED';
+        }
+        return emp;
+      });
+
+      const totalAuthorizedLeave = employees.filter((e: any) => e.LEAVE_TYPE_TAG === 'AUTHORIZED').length;
+      const totalUnauthorizedLeave = employees.filter((e: any) => e.LEAVE_TYPE_TAG === 'UNAUTHORIZED').length;
+
+      res.json({
+        totalAuthorizedLeave,
+        totalUnauthorizedLeave,
+        employees
+      });
     } catch (err) {
       // Fallback data for preview/development
       const now = new Date();
-      res.json([
+      const mockEmployees = [
         { 
           EMP_ID: '09747', EMP_NAME: 'Md. Nur Alam Siddik', 
           IN_LAT: '25.65085', IN_LONG: '88.77321', IN_TIME: '08:30 AM', 
           OUT_TIME: null, GEO_LAT: 25.65085, GEO_LONG: 88.77321, SERVER_TIME: now.toISOString(), 
-          LOCATION_STATUS: 'ACTIVE',
+          LOCATION_STATUS: 'ACTIVE TRACKING',
+          NH_NAME: 'HQ', ZONE_NAME: 'Zone A', REGION_NAME: 'Region 1', AREA_NAME: 'Area X', TERR_NAME: 'Territory 1' 
+        },
+        { 
+          EMP_ID: '10234', EMP_NAME: 'Amina Khatun', 
+          IN_LAT: null, IN_LONG: null, IN_TIME: null, 
+          OUT_TIME: null, GEO_LAT: 24.3636, GEO_LONG: 88.6241, SERVER_TIME: now.toISOString(), 
+          LOCATION_STATUS: 'UNAUTHORIZED LEAVE',
+          LEAVE_TYPE: 'UNAUTHORIZED',
+          LEAVE_TYPE_TAG: 'UNAUTHORIZED',
+          NH_NAME: 'HQ', ZONE_NAME: 'Zone B', REGION_NAME: 'Region 2', AREA_NAME: 'Area Y', TERR_NAME: 'Territory 2' 
+        },
+        { 
+          EMP_ID: '10235', EMP_NAME: 'Faridur Rahman', 
+          IN_LAT: null, IN_LONG: null, IN_TIME: null, 
+          OUT_TIME: null, GEO_LAT: 23.8103, GEO_LONG: 90.4125, SERVER_TIME: now.toISOString(), 
+          LOCATION_STATUS: 'LEAVE',
+          LEAVE_TYPE: 'AUTHORIZED',
+          LEAVE_TYPE_TAG: 'AUTHORIZED',
           NH_NAME: 'HQ', ZONE_NAME: 'Zone A', REGION_NAME: 'Region 1', AREA_NAME: 'Area X', TERR_NAME: 'Territory 1' 
         }
-      ]);
+      ];
+
+      const totalAuthorizedLeave = mockEmployees.filter((e: any) => e.LEAVE_TYPE_TAG === 'AUTHORIZED').length;
+      const totalUnauthorizedLeave = mockEmployees.filter((e: any) => e.LEAVE_TYPE_TAG === 'UNAUTHORIZED').length;
+
+      res.json({
+        totalAuthorizedLeave,
+        totalUnauthorizedLeave,
+        employees: mockEmployees
+      });
     }
   });
 

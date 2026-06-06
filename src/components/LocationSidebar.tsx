@@ -40,8 +40,8 @@ interface LocationSidebarProps {
   activeLocationData?: any[];
   activeDataLoading?: boolean;
   hibernateStatus?: any;
-  statusFilter: 'all' | 'active' | 'hibernate' | 'leave';
-  setStatusFilter: (v: 'all' | 'active' | 'hibernate' | 'leave') => void;
+  statusFilter: 'all' | 'active' | 'hibernate' | 'leave' | 'authorized_leave' | 'unauthorized_leave';
+  setStatusFilter: (v: 'all' | 'active' | 'hibernate' | 'leave' | 'authorized_leave' | 'unauthorized_leave') => void;
 }
 
 export const LocationSidebar: React.FC<LocationSidebarProps> = ({
@@ -82,6 +82,8 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
   statusFilter,
   setStatusFilter,
 }) => {
+  const [isLeaveHovered, setIsLeaveHovered] = React.useState(false);
+
   const hierarchyOptions = useMemo(() => {
     const DIVISIONS: Record<string, (e: any) => boolean> = {
       'GENERAL': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) !== '7' && String(e.EMP_LEVEL) !== '12',
@@ -206,23 +208,79 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
             </p>
           </button>
 
-          <button 
+          <div 
+            onMouseEnter={() => setIsLeaveHovered(true)}
+            onMouseLeave={() => setIsLeaveHovered(false)}
             onClick={() => setStatusFilter(statusFilter === 'leave' ? 'all' : 'leave')}
-            className={`p-4 border rounded-2xl transition-all text-left group active:scale-95 ${
-              statusFilter === 'leave' 
+            className={`border rounded-2xl transition-all duration-300 ease-in-out relative flex flex-col justify-between overflow-hidden cursor-pointer h-full min-h-[82px] select-none ${
+              ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter)
                 ? 'bg-rose-600 border-rose-500 shadow-lg shadow-rose-100' 
                 : 'bg-rose-50/60 border-rose-100 hover:bg-rose-100/80 hover:border-rose-200'
             }`}
           >
-            <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-1 ${
-              statusFilter === 'leave' ? 'text-rose-100' : 'text-rose-600'
-            }`}>Leave</p>
-            <p className={`text-2xl font-black tracking-tight tabular-nums ${
-              statusFilter === 'leave' ? 'text-white' : 'text-rose-700'
-            }`}>
-              {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'leave').length}
-            </p>
-          </button>
+            {!isLeaveHovered ? (
+              <div className="p-4 flex flex-col justify-between h-full w-full transition-all duration-300 text-left">
+                <p className={`text-[9px] font-extrabold uppercase tracking-widest mb-1 transition-colors duration-300 ${
+                  ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-rose-100' : 'text-rose-600'
+                }`}>Leave</p>
+                <p className={`text-2xl font-black tracking-tight tabular-nums transition-colors duration-300 ${
+                  ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-rose-700'
+                }`}>
+                  {hierarchyFilteredLocations.filter(gl => ['leave', 'unauthorized_leave'].includes(getEmployeeStatus(gl))).length}
+                </p>
+              </div>
+            ) : (
+              <div className="p-1 flex h-full w-full gap-1.5 items-stretch transition-all duration-300">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStatusFilter(statusFilter === 'authorized_leave' ? 'all' : 'authorized_leave');
+                  }}
+                  className={`flex-1 flex flex-col justify-between p-2 rounded-xl transition-all duration-300 text-left active:scale-95 ${
+                    statusFilter === 'authorized_leave'
+                      ? 'bg-white text-rose-700 shadow-sm'
+                      : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter)
+                        ? 'bg-rose-700 text-white hover:bg-rose-800 border border-rose-500'
+                        : 'bg-white hover:bg-rose-100 text-rose-700 border border-rose-100 hover:border-rose-300'
+                  }`}
+                >
+                  <span className={`text-[7px] font-extrabold uppercase tracking-wider leading-none transition-colors duration-300 ${
+                    statusFilter === 'authorized_leave' ? 'text-rose-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-rose-200' : 'text-rose-600'
+                  }`}>Approved</span>
+                  <span className={`text-lg font-black tracking-tight mt-1 leading-none transition-colors duration-300 ${
+                    statusFilter === 'authorized_leave' ? 'text-rose-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-rose-700'
+                  }`}>
+                    {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'leave').length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStatusFilter(statusFilter === 'unauthorized_leave' ? 'all' : 'unauthorized_leave');
+                  }}
+                  className={`flex-1 flex flex-col justify-between p-1.5 rounded-xl transition-all duration-300 text-left active:scale-95 ${
+                    statusFilter === 'unauthorized_leave'
+                      ? 'bg-white text-pink-700 shadow-sm'
+                      : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter)
+                        ? 'bg-pink-500 text-white hover:bg-pink-600 border border-rose-500'
+                        : 'bg-white hover:bg-pink-100 text-pink-700 border border-pink-100 hover:border-pink-300'
+                  }`}
+                >
+                  <span className={`text-[7px] font-extrabold uppercase tracking-wider leading-none transition-colors duration-300 ${
+                    statusFilter === 'unauthorized_leave' ? 'text-pink-600' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-pink-200' : 'text-pink-600'
+                  }`}>Missing</span>
+                  <span className={`text-lg font-black tracking-tight mt-1 leading-none transition-colors duration-300 ${
+                    statusFilter === 'unauthorized_leave' ? 'text-pink-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-pink-700'
+                  }`}>
+                    {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'unauthorized_leave').length}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button 
             onClick={() => setStatusFilter('all')}
@@ -241,9 +299,6 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
               }`}>
                 {hierarchyFilteredLocations.length}
               </p>
-              {statusFilter !== 'all' && (
-                <span className="text-[10px] font-bold text-slate-400 mb-1 group-hover:text-blue-600 transition-colors">Reset</span>
-              )}
             </div>
           </button>
         </div>
@@ -445,6 +500,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
                                 const status = getEmployeeStatus(gl);
                                 return (
                                   <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                    status === 'unauthorized_leave' ? 'bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.4)]' :
                                     status === 'leave' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' :
                                     status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 
                                     'bg-amber-500'
@@ -469,20 +525,22 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
           <div className="p-8 space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Live Signal</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signal State</span>
                   {(() => {
                     const globalData = allLatestLocations.find(gl => gl.EMP_ID === location.id);
                     const status = globalData ? getEmployeeStatus(globalData) : 'inactive';
                     return (
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 rounded-full border border-slate-100">
-                        <div className={`w-1 h-1 rounded-full ${
-                          status === 'active' ? 'bg-emerald-500' :
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          status === 'unauthorized_leave' ? 'bg-pink-500 shadow-[0_0_6px_rgba(236,72,153,0.6)]' :
+                          status === 'active' ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]' :
                           'bg-slate-400'
                         } animate-pulse`} />
                         <span className={`text-[8px] font-bold uppercase tracking-wider ${
+                          status === 'unauthorized_leave' ? 'text-pink-600' :
                           status === 'active' ? 'text-emerald-600' : 'text-slate-500'
                         }`}>
-                          {status === 'active' ? 'ONLINE' : 'OFFLINE'}
+                          {status === 'unauthorized_leave' ? 'UNAUTHORIZED LEAVE' : status === 'active' ? 'ONLINE' : 'OFFLINE'}
                         </span>
                       </div>
                     );
@@ -492,6 +550,19 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
                 <div className="space-y-1">
                   <h2 className="text-2xl font-bold tracking-tight">{location.name}</h2>
                   <p className="text-sm font-mono text-slate-400 font-bold">{location.id}</p>
+                  {(() => {
+                    const globalData = allLatestLocations.find(gl => gl.EMP_ID === location.id);
+                    const status = globalData ? getEmployeeStatus(globalData) : 'inactive';
+                    if (status === 'unauthorized_leave') {
+                      return (
+                        <div className="mt-2 bg-pink-50 border border-pink-100 text-pink-700 text-[11px] rounded-xl p-3 font-semibold space-y-1">
+                          <span className="font-extrabold text-[12px] uppercase tracking-wide">Status: Unauthorized Leave</span>
+                          <p className="font-medium text-pink-600">Employee has not generated any attendance logs today. Pulling their last known historical position.</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">

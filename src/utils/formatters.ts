@@ -71,6 +71,9 @@ export const getTimeElapsed = (dateStr: string | null) => {
 export const getEmployeeStatus = (emp: any) => {
   if (!emp) return 'leave';
   
+  // Priority 0: Specifically marked as Unauthorized Leave (Compliance Exception)
+  if (emp.LOCATION_STATUS === 'UNAUTHORIZED LEAVE') return 'unauthorized_leave';
+  
   // Priority 1: Specifically marked as Leave
   if (emp.LOCATION_STATUS === 'LEAVE' || emp.LEAVE_TYPE) return 'leave';
   
@@ -78,7 +81,7 @@ export const getEmployeeStatus = (emp: any) => {
   // The server uses SYSDATE vs APPLY_DATE_TIME which is the most accurate
   if (emp.LOCATION_STATUS) {
     const status = String(emp.LOCATION_STATUS).toUpperCase();
-    if (status.includes('YES') || status === 'ACTIVE') return 'active';
+    if (status.includes('YES') || status === 'ACTIVE' || status.includes('ACTIVE TRACKING')) return 'active';
     if (status.includes('NO') || status === 'HIBERNATE') return 'hibernate';
     if (status === 'LEAVE') return 'leave';
   }

@@ -166,7 +166,7 @@ export default function App() {
   const [selRegion, setSelRegion] = useState<string>('');
   const [selArea, setSelArea] = useState<string>('');
   const [selTerr, setSelTerr] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hibernate' | 'leave'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'hibernate' | 'leave' | 'authorized_leave' | 'unauthorized_leave'>('all');
 
   const [mapStyle, setMapStyle] = useState<'hybrid' | 'roadmap'>('hybrid');
   const [addressCache, setAddressCache] = useState<Record<string, string>>({});
@@ -174,9 +174,33 @@ export default function App() {
   const [dbStatus, setDbStatus] = useState<{ status: string; sample?: any; error?: string; advice?: string } | null>(null);
   const [pois, setPois] = useState<any[]>([]);
 
-  const handleClearFilters = () => {
-    setSelDiv(''); setSelNH(''); setSelZone(''); setSelRegion(''); setSelArea(''); setSelTerr('');
-    setSelectedEmpId(''); setSearchQuery(''); setStatusFilter('all');
+  const handleGlobalReset = () => {
+    // 1. Clear All Deployment Hierarchy Dropdown Filters
+    setSelDiv('');
+    setSelNH('');
+    setSelZone('');
+    setSelRegion('');
+    setSelArea('');
+    setSelTerr('');
+
+    // 2. Clear Active Search Queries
+    setSearchQuery('');
+
+    // 3. Clear Telemetry Logs & Focus Caching, and reset Status Filter
+    setSelectedEmpId('');
+    setLocation(null);
+    setActivePoint(null);
+    setStatusFilter('all');
+
+    // 4. Background Data Sync: re-trigger initial databases pull
+    const dateToFetch = currentPage === 'LOCATION' ? new Date().toISOString().split('T')[0] : targetDate;
+    fetch(`/api/all-latest-locations?date=${dateToFetch}`)
+      .then(res => res.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.employees || []);
+        setAllLatestLocations(Array.from(new Map(list.map((item: any) => [item.EMP_ID, item])).values()));
+      })
+      .catch(console.error);
   };
 
   const DIVISIONS: Record<string, (e: any) => boolean> = {
@@ -198,7 +222,10 @@ export default function App() {
     const dateToFetch = currentPage === 'LOCATION' ? new Date().toISOString().split('T')[0] : targetDate;
     fetch(`/api/all-latest-locations?date=${dateToFetch}`)
       .then(res => res.json())
-      .then(data => setAllLatestLocations(Array.from(new Map(data.map((item: any) => [item.EMP_ID, item])).values())))
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.employees || []);
+        setAllLatestLocations(Array.from(new Map(list.map((item: any) => [item.EMP_ID, item])).values()));
+      })
       .catch(console.error);
 
     fetch('/api/health')
@@ -269,7 +296,15 @@ export default function App() {
       // Status Filter
       if (statusFilter !== 'all') {
         const empStatus = getEmployeeStatus(e);
-        if (empStatus !== statusFilter) return false;
+        if (statusFilter === 'leave') {
+          if (!['leave', 'unauthorized_leave'].includes(empStatus)) return false;
+        } else if (statusFilter === 'authorized_leave') {
+          if (empStatus !== 'leave') return false;
+        } else if (statusFilter === 'unauthorized_leave') {
+          if (empStatus !== 'unauthorized_leave') return false;
+        } else {
+          if (empStatus !== statusFilter) return false;
+        }
       }
 
       const divMatch = !selDiv || (DIVISIONS[selDiv] ? DIVISIONS[selDiv](e) : true);
@@ -302,7 +337,7 @@ export default function App() {
 
   const sharedProps = {
     loading, employees, searchQuery, setSearchQuery, selDiv, setSelDiv, selNH, setSelNH, selZone, setSelZone, 
-    selRegion, setSelRegion, selArea, setSelArea, selTerr, setSelTerr, handleClearFilters,
+    selRegion, setSelRegion, selArea, setSelArea, selTerr, setSelTerr, handleClearFilters: handleGlobalReset,
     selectedEmpId, setSelectedEmpId, location, activePoint, handlePointSelect: setActivePoint,
     addressCache, mapStyle, setMapStyle, totalDistance, filteredGlobalLocations, allLatestLocations,
     syncHierarchy, showHospitals, setShowHospitals, showCustomers, setShowCustomers, pois, setPois, setPoiLoading,
