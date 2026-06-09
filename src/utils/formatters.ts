@@ -77,6 +77,20 @@ export const getEmployeeStatus = (emp: any) => {
   // Priority 1: Specifically marked as Leave
   if (emp.LOCATION_STATUS === 'LEAVE' || emp.LEAVE_TYPE) return 'leave';
   
+  // Priority 1.5: If there is an update time (SERVER_TIME or LAST_LOCATION_TIME), check if it is over 1 hour ago
+  // If no recent data from the last 1 hour, show as HIBERNATE
+  const updateTime = emp.SERVER_TIME || emp.LAST_LOCATION_TIME;
+  if (updateTime) {
+    const lastUpdate = new Date(updateTime);
+    const now = new Date();
+    const diffMs = now.getTime() - lastUpdate.getTime();
+    const ONE_HOUR = 3600000;
+    
+    if (diffMs >= ONE_HOUR) {
+      return 'hibernate';
+    }
+  }
+  
   // Priority 2: Use the server-calculated status if available
   // The server uses SYSDATE vs APPLY_DATE_TIME which is the most accurate
   if (emp.LOCATION_STATUS) {
