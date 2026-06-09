@@ -210,7 +210,7 @@ export default function App() {
     'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
     'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
     'DERMA': (e) => String(e.DIV_CODE) === '50',
-    'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+    'SR': (e) => String(e.EMP_LEVEL) === '7',
   };
 
   useEffect(() => {
@@ -265,13 +265,29 @@ export default function App() {
   }, [selectedEmpId, targetDate]);
 
   useEffect(() => {
+    const currentEmp = employees.find(e => e.EMP_ID === selectedEmpId);
+
     if (selTerr) {
-      const mpo = employees.find(e => e.TERR_NAME === selTerr && e.EMP_LEVEL === '6');
-      if (mpo) setSelectedEmpId(mpo.EMP_ID);
+      if (currentEmp && currentEmp.TERR_NAME === selTerr) {
+        return; // Retain current employee if already in selected territory
+      }
+      const targetEmp = employees.find(e => e.TERR_NAME === selTerr && (e.EMP_LEVEL === '6' || e.EMP_LEVEL === '7' || e.EMP_LEVEL === '12'));
+      if (targetEmp) {
+        setSelectedEmpId(targetEmp.EMP_ID);
+      } else {
+        const anyEmp = employees.find(e => e.TERR_NAME === selTerr);
+        if (anyEmp) setSelectedEmpId(anyEmp.EMP_ID);
+      }
     } else if (selArea) {
+      if (currentEmp && currentEmp.AREA_NAME === selArea) {
+        return; // Retain current employee if already in selected area
+      }
       const am = employees.find(e => e.AREA_NAME === selArea && e.EMP_LEVEL === '5');
       if (am) setSelectedEmpId(am.EMP_ID);
     } else if (selRegion) {
+      if (currentEmp && currentEmp.REGION_NAME === selRegion) {
+        return; // Retain current employee if already in selected region
+      }
       const rm = employees.find(e => e.REGION_NAME === selRegion && e.EMP_LEVEL === '4');
       if (rm) setSelectedEmpId(rm.EMP_ID);
     }

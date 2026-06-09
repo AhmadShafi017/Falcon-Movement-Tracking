@@ -92,7 +92,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
       'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
       'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
       'DERMA': (e) => String(e.DIV_CODE) === '50',
-      'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+      'SR': (e) => String(e.EMP_LEVEL) === '7',
     };
 
     const getUniquePairs = (list: Employee[], codeKey: keyof Employee, nameKey: keyof Employee) => {
@@ -131,7 +131,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = ({
       'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
       'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
       'DERMA': (e) => String(e.DIV_CODE) === '50',
-      'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+      'SR': (e) => String(e.EMP_LEVEL) === '7',
     };
 
     return allLatestLocations.filter(e => {

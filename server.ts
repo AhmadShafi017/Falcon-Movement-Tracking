@@ -984,7 +984,7 @@ async function startServer() {
         else if (selDiv === "ONCOLOGY") dc = "DIV_CODE = '30'";
         else if (selDiv === "SERVAY") dc = "DIV_CODE = '10' AND EMP_LEVEL = '12'";
         else if (selDiv === "DERMA") dc = "DIV_CODE = '50'";
-        else if (selDiv === "SR") dc = "DIV_CODE = '10' AND EMP_LEVEL = '7'";
+        else if (selDiv === "SR") dc = "EMP_LEVEL = '7'";
 
         divCondition = `AND TERR_CODE IN (SELECT DISTINCT TERR_CODE FROM EMPLOYEE_HIERARCHY WHERE ${dc})`;
       }
@@ -1123,7 +1123,7 @@ async function startServer() {
         'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
         'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
         'DERMA': (e) => String(e.DIV_CODE) === '50',
-        'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+        'SR': (e) => String(e.EMP_LEVEL) === '7',
       };
 
       if (division && division !== 'ALL' && division !== 'all') {
@@ -1167,7 +1167,7 @@ async function startServer() {
         'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
         'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
         'DERMA': (e) => String(e.DIV_CODE) === '50',
-        'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+        'SR': (e) => String(e.EMP_LEVEL) === '7',
       };
 
       const filteredEmployees = (list as any[]).filter((e: any) => {

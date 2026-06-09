@@ -68,7 +68,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
     'ONCOLOGY': (e) => String(e.DIV_CODE) === '30',
     'SERVAY': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '12',
     'DERMA': (e) => String(e.DIV_CODE) === '50',
-    'SR': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) === '7',
+    'SR': (e) => String(e.EMP_LEVEL) === '7',
   };
 
   const currentHierarchyOptions = useMemo(() => {
