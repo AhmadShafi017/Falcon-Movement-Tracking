@@ -1,0 +1,26 @@
+# ============================================================================
+# CLINE SYSTEM INTEGRITY & SECURITY RULES
+# ============================================================================
+
+## 1. CRITICAL SECURITY & CREDENTIAL PRIVACY (NEVER READ)
+- **ZERO VISIBILITY TO SECRETS:** You are strictly forbidden from reading, opening, analyzing, or exposing `.env`, `.env.local`, `.env.production`, or any file containing API keys, private certificates, or database credentials.
+- **NO HARDCODING:** Never write plaintext database passwords, system security tokens, or service account hashes into any repository files. Always reference them via existing environment configurations.
+
+## 2. DATABASE OPERATION CONSTRAINTS (READ/WRITE ONLY, NO DDL)
+- **NO DDL OPERATIONS:** You are strictly forbidden from creating, executing, or writing queries that alter the structural schema of the database. 
+  - **NEVER WRITE:** `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, `RENAME`, or `TRUNCATE`.
+- **ALLOWED OPERATIONS:** You may only write Data Manipulation Language (DML) queries for application logic: `SELECT`, `INSERT`, `UPDATE`, and `DELETE`.
+- **POOL MANAGEMENT:** Always utilize the existing `oracledb` connection pool lifecycle management. Ensure connections are properly released in a `finally` block to prevent resource leaks.
+
+## 3. UI LAYOUT & STYLE CONSTRAINTS
+- **TAILWIND CSS FIRST:** When editing React views, utilize utility-first Tailwind CSS classes. Do not generate random custom CSS stylesheet rules unless explicitly requested.
+- **DYNAMIC VIEWPORTS:** Ensure layouts use flexible structural techniques (like `flex-1 min-h-0 overflow-y-auto`) to lock applications within the visible viewport height, avoiding double browser scrollbars.
+- **PAGINATION DEFAULT:** For large enterprise data visualizations (such as employee tables or operational log listings), default to a max row limit of 10 items per page with clear step controls.
+
+## 4. SYSTEM RUNTIME & DIAGNOSTICS
+- **DUAL-RUNTIME RUNNING ENVIRONMENT:** Keep in mind that this application runs inside a secure network reverse-proxy configuration where the parent shell is Oracle APEX (HTTPS) communicating with an Express server utility (HTTP/HTTPS via proxy trusting). 
+- **TRUST PROXY LIFECYCLE:** If touching networking layers or middleware controllers, never remove proxy headers such as `app.set('trust proxy', 1);` or security adjustments handling iframe ancestors.
+
+# ============================================================================
+# END OF SPECIFICATION
+# ============================================================================
