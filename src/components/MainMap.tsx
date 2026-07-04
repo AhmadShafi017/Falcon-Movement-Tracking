@@ -32,9 +32,9 @@ const endIcon = new L.DivIcon({
 
 const intermediateIcon = new L.DivIcon({
   className: 'custom-marker',
-  html: '<div class="w-7 h-7 bg-yellow-400 rounded-full border-4 border-white shadow-lg flex items-center justify-center"><div class="w-1.5 h-1.5 bg-white rounded-full"></div></div>',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14]
+  html: '<div class="w-4 h-4 bg-yellow-400 rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div class="w-1 h-1 bg-white rounded-full"></div></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
 });
 
 const hospitalIcon = new L.DivIcon({
