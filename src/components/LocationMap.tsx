@@ -138,7 +138,7 @@ export const LocationMap: React.FC<LocationMapProps> = memo(({
         maxZoom={22}
         maxNativeZoom={20}
       />
-      <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">SIGNAL TRACKER</a>' />
+      <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">mTracking V-2.0</a>' />
 
       {filteredGlobalLocations.map((gl, idx) => {
         const status = getEmployeeStatus(gl);
@@ -181,72 +181,21 @@ export const LocationMap: React.FC<LocationMapProps> = memo(({
                   <span className="text-[7px] font-bold text-slate-500 uppercase">A: {gl.AREA_CODE || 'N/A'}</span>
                   <span className="text-[7px] font-bold text-slate-500 uppercase">R: {gl.REGION_CODE || 'N/A'}</span>
                 </div>
+                <div className="flex gap-2 mt-1 pt-1 border-t border-slate-100">
+                  <span className="text-[7px] font-bold text-slate-500 uppercase">
+                    {gl.SERVER_TIME ? toBDDateOnlyString(gl.SERVER_TIME) : 'N/A'}
+                  </span>
+                  <span className="text-[7px] font-bold text-slate-500 uppercase">
+                    {gl.SERVER_TIME ? toBDTimeString(gl.SERVER_TIME) : 'N/A'}
+                  </span>
+                </div>
+                <div className="mt-1">
+                  <span className="text-[7px] font-black text-blue-600 uppercase italic">
+                    {gl.SERVER_TIME ? getTimeElapsed(gl.SERVER_TIME) : 'SIGNAL LOST'}
+                  </span>
+                </div>
               </div>
             </Tooltip>
-            <Popup className="custom-popup">
-              <div className="p-4 min-w-[280px] space-y-4">
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                  <div className={`w-3.5 h-3.5 rounded-full ring-4 ${
-                    status === 'unauthorized_leave' ? 'bg-pink-500 ring-pink-100' :
-                    status === 'active' ? 'bg-emerald-500 ring-emerald-100' : 
-                    status === 'hibernate' ? 'bg-amber-500 ring-amber-100' : 
-                    status === 'leave' ? 'bg-red-500 ring-red-100' :
-                    'bg-slate-300 ring-slate-100'
-                  }`} />
-                  <div>
-                    <p className="text-[14px] font-black text-slate-800 uppercase tracking-tight leading-none mb-1">{gl.EMP_NAME}</p>
-                    <p className="text-[10px] font-bold text-slate-400 font-mono italic tracking-wider">ID: {gl.EMP_ID}</p>
-                  </div>
-                </div>
-
-                {status === 'unauthorized_leave' && (
-                  <div className="bg-pink-50 border border-pink-100 text-pink-700 p-2.5 text-[10px] font-bold rounded-lg leading-relaxed">
-                    🚨 STATUS: UNAUTHORIZED LEAVE<br/>
-                    <span className="font-medium text-pink-600">Location pulled from last known historical position.</span>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.15em]">Last Update Date</p>
-                    <p className="text-[11px] font-bold text-slate-700">{gl.SERVER_TIME ? toBDDateOnlyString(gl.SERVER_TIME) : 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1 text-right">
-                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.15em]">Last Update Time</p>
-                    <p className="text-[11px] font-bold text-slate-700">{gl.SERVER_TIME ? toBDTimeString(gl.SERVER_TIME) : 'N/A'}</p>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.15em] mb-1">Time Elapsed</p>
-                  <p className="text-[11px] font-black text-blue-600 uppercase italic">
-                    {gl.SERVER_TIME ? getTimeElapsed(gl.SERVER_TIME) : 'SIGNAL LOST'}
-                  </p>
-                </div>
-
-                <div className="space-y-3 pt-1">
-                  <div className="border-l-2 border-slate-200 pl-3 py-0.5">
-                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Territory</p>
-                    <p className="text-[10px] font-bold text-slate-700">{gl.TERR_NAME} ({gl.TERR_CODE})</p>
-                  </div>
-                  <div className="border-l-2 border-slate-200 pl-3 py-0.5">
-                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Area</p>
-                    <p className="text-[10px] font-bold text-slate-700">{gl.AREA_NAME} ({gl.AREA_CODE})</p>
-                  </div>
-                  <div className="border-l-2 border-slate-200 pl-3 py-0.5">
-                    <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mb-0.5">Region</p>
-                    <p className="text-[10px] font-bold text-slate-700">{gl.REGION_NAME} ({gl.REGION_CODE})</p>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => setSelectedEmpId(gl.EMP_ID)} 
-                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black hover:bg-emerald-600 transition-all uppercase tracking-[0.2em] shadow-lg shadow-slate-100 active:scale-95"
-                >
-                  SATELLITE FOCUS
-                </button>
-              </div>
-            </Popup>
           </Marker>
         );
       })}

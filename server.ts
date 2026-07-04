@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 5000;
 
   // ==========================================
   // CORS & CSP CROSS-ORIGIN SECURE MIDDLEWARE
@@ -1019,7 +1019,7 @@ async function startServer() {
           SELECT 
             B.CUST_CODE as ID, B.CUST_NAME as NAME, B.CUST_ADDRESS as ADDRESS, 
             B.GEO_LAT as LAT, B.GEO_LONG as LNG, 'CUSTOMER' as TYPE
-          FROM CUSTOMER_MASTER B
+          FROM CUST_MASTER B
           WHERE B.GEO_LAT IS NOT NULL AND B.GEO_LAT != 0
             AND B.GEO_LONG IS NOT NULL AND B.GEO_LONG != 0
             ${divCondition} ${hCond}

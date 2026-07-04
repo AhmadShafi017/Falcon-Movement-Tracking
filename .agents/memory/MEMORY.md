@@ -1,0 +1,1 @@
+- [Combined Express+Vite dev server](combined-express-vite-server.md) — single server.ts runs Express API + Vite middleware on one port; don't split into separate frontend/backend workflows.

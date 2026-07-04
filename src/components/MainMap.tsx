@@ -32,7 +32,7 @@ const endIcon = new L.DivIcon({
 
 const intermediateIcon = new L.DivIcon({
   className: 'custom-marker',
-  html: '<div class="w-4 h-4 bg-yellow-400 rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div class="w-1 h-1 bg-white rounded-full"></div></div>',
+  html: '<div class="w-4 h-4 bg-yellow-400 rounded-full border-2 border-white shadow-lg flex items-center justify-center"><div class="w-1.5 h-1.5 bg-white rounded-full"></div></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8]
 });
@@ -224,7 +224,7 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
         maxZoom={22}
         maxNativeZoom={20}
       />
-      <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">TRACKER</a>' />
+      <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">mTracking V-2.0</a>' />
 
       {filteredGlobalLocations.map((gl, idx) => {
         const status = getEmployeeStatus(gl);

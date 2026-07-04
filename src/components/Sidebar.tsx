@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Employee, LocationData, MovementPoint } from '../types';
@@ -112,24 +112,36 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
   }, [employees, selDiv, selNH, selZone, selRegion, selArea]);
 
   const sidebarColorClass = currentPage === 'MOVEMENT' ? 'border-l-blue-600' : 'border-l-emerald-500';
+  const [showDeploymentHierarchy, setShowDeploymentHierarchy] = useState(true);
 
   return (
-    <aside className="w-96 border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
+    <aside className="w-96 h-full border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
       <div className={`p-6 bg-slate-50/50 border-b border-slate-100 space-y-4 border-l-4 ${sidebarColorClass}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-blue-600" />
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Deployment Hierarchy</h3>
           </div>
-          <button 
-            onClick={handleClearFilters}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-200/50 text-[10px] font-bold text-slate-500 transition-colors"
-          >
-            <RotateCcw size={12} />
-            <span>Reset</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleClearFilters}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-200/50 text-[10px] font-bold text-slate-500 transition-colors"
+            >
+              <RotateCcw size={12} />
+              <span>Reset</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeploymentHierarchy(prev => !prev)}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-200/50 text-[10px] font-bold text-slate-500 transition-colors border border-slate-200"
+            >
+              {showDeploymentHierarchy ? 'HIDE' : 'SHOW'}
+            </button>
+          </div>
         </div>
 
+        {showDeploymentHierarchy && (
+        <>
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={14} className="text-slate-400" />
@@ -378,6 +390,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
             </select>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">

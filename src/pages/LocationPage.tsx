@@ -1,5 +1,6 @@
 
 import React, { useMemo, useEffect, useRef, useState } from 'react';
+import { Menu } from 'lucide-react';
 import { LocationSidebar } from '../components/LocationSidebar';
 import { LocationMap } from '../components/LocationMap';
 import { Employee, LocationData, MovementPoint } from '../types';
@@ -58,6 +59,7 @@ export const LocationPage: React.FC<LocationPageProps> = (props) => {
   const [activeLocationData, setActiveLocationData] = useState<any[]>([]);
   const [activeDataLoading, setActiveDataLoading] = useState(false);
   const [hibernateStatus, setHibernateStatus] = useState<any>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (!props.selectedEmpId) {
@@ -148,20 +150,31 @@ export const LocationPage: React.FC<LocationPageProps> = (props) => {
   }, [mapCenter, props.showHospitals, props.showCustomers, props.selDiv, props.selNH, props.selZone, props.selRegion, props.selArea, props.selTerr]);
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <LocationSidebar 
-        {...props} 
-        activeLocationData={activeLocationData} 
-        activeDataLoading={activeDataLoading} 
-        hibernateStatus={hibernateStatus}
-      />
-      <div className="flex-1 relative bg-slate-50">
+    <div className="flex-1 relative overflow-hidden">
+      <div className="absolute inset-0 bg-slate-50">
         <LocationMap 
           {...props}
           center={mapCenter}
           zoom={props.selectedEmpId ? 15 : 7}
         />
       </div>
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(prev => !prev)}
+        className="absolute top-4 left-4 z-[1000] p-2.5 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+      >
+        <Menu size={18} className="text-slate-700" />
+      </button>
+      {sidebarOpen && (
+        <div className="absolute inset-y-0 left-0 z-[999]">
+          <LocationSidebar 
+            {...props} 
+            activeLocationData={activeLocationData} 
+            activeDataLoading={activeDataLoading} 
+            hibernateStatus={hibernateStatus}
+          />
+        </div>
+      )}
     </div>
   );
 };

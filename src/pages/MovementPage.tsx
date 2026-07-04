@@ -1,5 +1,6 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Menu } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar';
 import { MainMap } from '../components/MainMap';
 import { Employee, LocationData, MovementPoint } from '../types';
@@ -71,10 +72,11 @@ export const MovementPage: React.FC<MovementPageProps> = (props) => {
     return Object.values(groups).filter(path => path.length >= 1);
   }, [props.location?.history]);
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <Sidebar {...props} currentPage="MOVEMENT" />
-      <div className="flex-1 relative bg-slate-50">
+    <div className="flex-1 relative overflow-hidden">
+      <div className="absolute inset-0 bg-slate-50">
         <MainMap 
           {...props}
           center={mapCenter}
@@ -83,6 +85,18 @@ export const MovementPage: React.FC<MovementPageProps> = (props) => {
           groupedPathCoordinates={groupedPathCoordinates}
         />
       </div>
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(prev => !prev)}
+        className="absolute top-4 left-4 z-[1000] p-2.5 bg-white rounded-xl shadow-lg border border-slate-200 hover:bg-slate-50 transition-all active:scale-95"
+      >
+        <Menu size={18} className="text-slate-700" />
+      </button>
+      {sidebarOpen && (
+        <div className="absolute inset-y-0 left-0 z-[999]">
+          <Sidebar {...props} currentPage="MOVEMENT" />
+        </div>
+      )}
     </div>
   );
 };

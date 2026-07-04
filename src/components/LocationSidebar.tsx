@@ -1,6 +1,6 @@
 
 import React, { memo, useMemo } from 'react';
-import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Users, RotateCcw, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Employee, LocationData, MovementPoint } from '../types';
 import { getDesignation, getTeam, toBDTimeString, getEmployeeStatus } from '../utils/formatters';
@@ -87,6 +87,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
   setRoleFilter,
 }) => {
   const [isLeaveHovered, setIsLeaveHovered] = React.useState(false);
+  const [showSignalIntelligence, setShowSignalIntelligence] = React.useState(true);
 
   const DIVISIONS_MAP: Record<string, (e: any) => boolean> = useMemo(() => ({
     'GENERAL': (e) => String(e.DIV_CODE) === '10' && String(e.EMP_LEVEL) !== '7' && String(e.EMP_LEVEL) !== '12',
@@ -140,7 +141,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
   }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr]);
 
   return (
-    <aside className="w-96 border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
+    <aside className="w-96 h-full border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
       <div className={`p-6 bg-slate-50/50 border-b border-slate-100 space-y-4 border-l-4 border-l-emerald-500`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -162,9 +163,17 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
               <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-widest">Live Stats</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowSignalIntelligence(prev => !prev)}
+              className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-[8px] font-bold text-slate-500 rounded-full transition-all active:scale-95 border border-slate-200"
+            >
+              {showSignalIntelligence ? 'HIDE' : 'SHOW'}
+            </button>
           </div>
         </div>
 
+        {showSignalIntelligence && (
         <div className="grid grid-cols-2 gap-3">
           <button 
             onClick={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
@@ -241,7 +250,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                 >
                   <span className={`text-[7px] font-extrabold uppercase tracking-wider leading-none transition-colors duration-300 ${
                     statusFilter === 'authorized_leave' ? 'text-rose-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-rose-200' : 'text-rose-600'
-                  }`}>Approved</span>
+                  }`}>Leave</span>
                   <span className={`text-lg font-black tracking-tight mt-1 leading-none transition-colors duration-300 ${
                     statusFilter === 'authorized_leave' ? 'text-rose-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-rose-700'
                   }`}>
@@ -265,7 +274,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                 >
                   <span className={`text-[7px] font-extrabold uppercase tracking-wider leading-none transition-colors duration-300 ${
                     statusFilter === 'unauthorized_leave' ? 'text-pink-600' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-pink-200' : 'text-pink-600'
-                  }`}>Missing</span>
+                  }`}>Absent</span>
                   <span className={`text-lg font-black tracking-tight mt-1 leading-none transition-colors duration-300 ${
                     statusFilter === 'unauthorized_leave' ? 'text-pink-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-pink-700'
                   }`}>
@@ -296,6 +305,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
             </div>
           </button>
         </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -523,48 +533,6 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
               </div>
             </div>
 
-            <div className="space-y-4 w-full">
-               {filteredGlobalLocations.length > 0 && (
-                 <div className="px-6 space-y-3 text-left">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Field Roster</p>
-                      <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">LIVE</span>
-                    </div>
-                    <div className="space-y-1.5 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
-                      {filteredGlobalLocations
-                        .filter(gl => gl.GEO_LAT)
-                        .slice(0, 30)
-                        .map(gl => (
-                          <button 
-                            key={`loc-list-${gl.EMP_ID}`}
-                            onClick={() => setSelectedEmpId(gl.EMP_ID)}
-                            className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 rounded-xl transition-all group"
-                          >
-                            <div className="text-left flex items-center gap-3">
-                              {(() => {
-                                const status = getEmployeeStatus(gl);
-                                return (
-                                  <div className={`w-2 h-2 rounded-full shrink-0 ${
-                                    status === 'unauthorized_leave' ? 'bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.4)]' :
-                                    status === 'leave' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' :
-                                    status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 
-                                    'bg-amber-500'
-                                  }`} />
-                                );
-                              })()}
-                              <div>
-                                <p className="text-[10px] font-bold text-slate-700 group-hover:text-emerald-600">{gl.EMP_NAME}</p>
-                                <p className="text-[8px] text-slate-400 font-mono">{gl.EMP_ID}</p>
-                              </div>
-                            </div>
-                            <ChevronRight size={12} className="text-slate-300 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-                          </button>
-                        ))
-                      }
-                    </div>
-                 </div>
-               )}
-             </div>
           </div>
         ) : location ? (
           <div className="p-8 space-y-8">
