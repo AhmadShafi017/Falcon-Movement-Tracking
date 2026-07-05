@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Calendar, Search, Trash2, Download, ExternalLink, MapPin, ChevronLeft, ChevronRight, Check, BarChart2, Filter, Activity, Users, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Employee } from '../types';
-import { getDesignation, getTeam } from '../utils/formatters';
+import { getDesignation, getTeam, toBDTimeString } from '../utils/formatters';
 
 // Live reverse-geocoding via Google Maps (server proxy). Always performs a fresh network
 // lookup per call — results are NEVER cached/stored, per requirement.
@@ -258,7 +258,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
           `"${getDesignation(row.EMP_LEVEL)}"`,
           `"${getTeam(row.DIV_CODE)}"`,
           `"${row.APPLY_DATE || ''}"`,
-          `"${row.TIME_STR || ''}"`,
+          `"${row.TIME_STR ? toBDTimeString(row.TIME_STR) : ''}"`,
           `"${row.EVENT_NAME || 'Tracked Location'}"`,
           `"${row.LATITUDE ? Number(row.LATITUDE).toFixed(5) : ''}, ${row.LONGITUDE ? Number(row.LONGITUDE).toFixed(5) : ''}"`,
           `"${resolvedAddress.replace(/"/g, '""')}"`
@@ -772,7 +772,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                       <td className="px-6 py-3.5 font-mono text-slate-500">{row.TERR_CODE}</td>
                       <td className="px-6 py-3.5">{row.TERR_NAME}</td>
                       <td className="px-6 py-3.5 font-mono text-slate-500">{row.APPLY_DATE}</td>
-                      <td className="px-6 py-3.5 font-mono text-slate-500">{row.TIME_STR}</td>
+                      <td className="px-6 py-3.5 font-mono text-slate-500">{toBDTimeString(row.TIME_STR)}</td>
                       <td className="px-6 py-3.5 max-w-[340px]">
                         <div className="flex flex-col gap-1 text-slate-700">
                           <div className="flex items-center gap-1.5 flex-wrap">

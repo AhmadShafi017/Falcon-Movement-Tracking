@@ -945,6 +945,72 @@ async function startServer() {
     }
   });
 
+  // Builds a full, detailed address string from a Google Geocoding API "results" array.
+  // Google's top result (most precise) is sometimes just a bare Plus Code (e.g. "5H9V+Q63,
+  // Bangladesh") when no named street exists at that point. To give users a complete,
+  // recognizable location name, we enrich that base with the locality/district/division
+  // context pulled from the address_components of the other results in the same response —
+  // all of which come directly from Google Maps, never invented locally.
+  function buildDetailedAddress(results: any[]): string {
+    const primary = results[0];
+    let baseAddress: string = primary.formatted_address || '';
+
+    const wantedTypes = [
+      'sublocality_level_2',
+      'sublocality_level_1',
+      'sublocality',
+      'neighborhood',
+      'locality',
+      'administrative_area_level_3',
+      'administrative_area_level_2',
+      'administrative_area_level_1',
+      'country',
+    ];
+
+    const collected: Record<string, string> = {};
+    for (const result of results) {
+      for (const comp of result.address_components || []) {
+        for (const t of wantedTypes) {
+          if (comp.types.includes(t) && !collected[t]) {
+            collected[t] = comp.long_name;
+          }
+        }
+      }
+    }
+
+    // Strip a trailing ", Country" from the base address (if present) so we can
+    // re-append it at the very end, after the richer locality/district context.
+    const country = collected['country'];
+    if (country && baseAddress.endsWith(`, ${country}`)) {
+      baseAddress = baseAddress.slice(0, -1 * (country.length + 2));
+    }
+
+    const parts: string[] = [baseAddress];
+    const appendOrder = [
+      'neighborhood',
+      'sublocality_level_2',
+      'sublocality_level_1',
+      'sublocality',
+      'locality',
+      'administrative_area_level_3',
+      'administrative_area_level_2',
+      'administrative_area_level_1',
+    ];
+
+    for (const t of appendOrder) {
+      const val = collected[t];
+      if (val && !baseAddress.includes(val) && !parts.includes(val)) {
+        parts.push(val);
+      }
+    }
+
+    if (country && !parts.includes(country)) {
+      parts.push(country);
+    }
+
+    return parts.join(', ');
+  }
+
   // Reverse geocode a lat/lng pair into a real human-readable address using the Google
   // Maps Geocoding API. Always performs a live lookup — results are NEVER cached, per
   // requirement, so the address reflects the true current geocoder response every time.
@@ -966,7 +1032,8 @@ async function startServer() {
       const data: any = await response.json();
 
       if (data.status === "OK" && data.results && data.results.length > 0) {
-        res.json({ address: data.results[0].formatted_address, status: "OK" });
+        const detailedAddress = buildDetailedAddress(data.results);
+        res.json({ address: detailedAddress, status: "OK" });
       } else {
         res.json({ address: null, status: data.status || "UNKNOWN_ERROR", errorMessage: data.error_message });
       }
