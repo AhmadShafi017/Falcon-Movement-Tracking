@@ -10,14 +10,23 @@ const resolveLiveAddress = async (lat: any, lng: any): Promise<string> => {
   if (lat === null || lat === undefined || lng === null || lng === undefined || lat === '' || lng === '') {
     return 'Unknown Location';
   }
+  // Try primary geocode endpoint first
   try {
     const res = await fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
     const data = await res.json();
     if (data.address) return data.address;
-    return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
   } catch {
-    return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+    // fall through to Nominatim
   }
+  // Fallback: OpenStreetMap Nominatim reverse geocode
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+    const data = await res.json();
+    if (data.display_name) return data.display_name;
+  } catch {
+    // fall through to lat/lng fallback
+  }
+  return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
 };
 
 // Displays a human-readable address for a coordinate pair, resolved live (no caching)

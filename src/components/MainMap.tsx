@@ -204,13 +204,15 @@ interface MainMapProps {
   location: any;
   activePoint: MovementPoint | null;
   groupedPathCoordinates: [number, number][][];
+  addressCache: Record<string, string>;
+  handlePointSelect: (p: MovementPoint) => void;
 }
 
 export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
   center, zoom, mapStyle, showHospitals, setShowHospitals, showCustomers, setShowCustomers, pois, setPois, setPoiLoading,
   selDiv, selNH, selZone, selRegion, selArea, selTerr,
   filteredGlobalLocations, currentPage, selectedEmpId, setSelectedEmpId, syncHierarchy,
-  location, activePoint, groupedPathCoordinates
+  location, activePoint, groupedPathCoordinates, addressCache, handlePointSelect
 }) => {
   return (
     <MapContainer center={[center.lat, center.lng]} zoom={zoom} maxZoom={22} zoomControl={false} attributionControl={false} className="w-full h-full">
@@ -348,11 +350,24 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
         );
       })}
 
-      {activePoint && !isNaN(activePoint.lat) && !isNaN(activePoint.lng) && (
-        <Marker position={[activePoint.lat, activePoint.lng]} icon={new L.DivIcon({ className: 'focal-point', html: '<div class="relative flex items-center justify-center"><div class="absolute w-20 h-20 bg-blue-400/20 rounded-full animate-ping"></div><div class="absolute w-12 h-12 bg-blue-500/30 rounded-full animate-pulse border-2 border-white"></div><div class="w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-2xl"></div></div>', iconSize: [80, 80], iconAnchor: [40, 40] })} zIndexOffset={1000}>
-          <Popup autoPan={true}><div className="p-1 font-sans text-center font-bold text-blue-600 uppercase text-[11px] tracking-[0.2em]">Telemetry Focus</div></Popup>
-        </Marker>
-      )}
+      {activePoint && !isNaN(activePoint.lat) && !isNaN(activePoint.lng) && (() => {
+        const actDateStr = new Date(activePoint.time).toISOString().split('T')[0];
+        const actDayPoints = location?.history?.filter((h: any) => new Date(h.time).toISOString().split('T')[0] === actDateStr).sort((a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime()) || [];
+        const isStart = activePoint.time === actDayPoints[0]?.time;
+        const isEnd = activePoint.time === actDayPoints[actDayPoints.length - 1]?.time;
+        const actTitle = isStart ? 'Start Point' : isEnd ? 'End Point' : 'Stopage';
+        const actAddress = addressCache[`${activePoint.lat}-${activePoint.lng}`] || `${activePoint.lat.toFixed(5)}, ${activePoint.lng.toFixed(5)}`;
+        return (
+          <Marker position={[activePoint.lat, activePoint.lng]} icon={new L.DivIcon({ className: 'focal-point', html: '<div class="relative flex items-center justify-center"><div class="absolute w-20 h-20 bg-blue-400/20 rounded-full animate-ping"></div><div class="absolute w-12 h-12 bg-blue-500/30 rounded-full animate-pulse border-2 border-white"></div><div class="w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-2xl"></div></div>', iconSize: [80, 80], iconAnchor: [40, 40] })} zIndexOffset={1000}>
+            <Popup autoPan={true}>
+              <div className="p-2 min-w-[200px]">
+                <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-2">{actTitle}</p>
+                <p className="text-[10px] font-bold text-slate-600 leading-relaxed">{actAddress}</p>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })()}
 
       {groupedPathCoordinates.map((path, idx) => {
         const colors = ['#8B5CF6', '#06B6D4', '#EC4899', '#6366F1', '#F97316'];
@@ -371,9 +386,25 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
         const isStartOfDay = p.time === dayPoints[0]?.time;
         const isEndOfDay = p.time === dayPoints[dayPoints.length - 1]?.time;
         const iconToUse = isStartOfDay ? startIcon : isEndOfDay ? endIcon : intermediateIcon;
+        const address = addressCache[`${p.lat}-${p.lng}`] || `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
+        const title = isStartOfDay ? 'Start Point' : isEndOfDay ? 'End Point' : 'Stopage';
         return (
-          <Marker key={`map-node-${i}-${p.time}`} position={[p.lat, p.lng]} icon={iconToUse}>
-            <Popup><div className="text-[10px] p-1 font-sans font-bold uppercase tracking-widest">{isStartOfDay ? 'Startup' : isEndOfDay ? 'Terminal' : 'Stopage'}</div></Popup>
+          <Marker 
+            key={`map-node-${i}-${p.time}`} 
+            position={[p.lat, p.lng]} 
+            icon={iconToUse}
+            eventHandlers={{ 
+              click: () => { 
+                handlePointSelect(p); 
+              } 
+            }}
+          >
+            <Popup>
+              <div className="p-2 min-w-[200px]">
+                <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-2">{title}</p>
+                <p className="text-[10px] font-bold text-slate-600 leading-relaxed">{address}</p>
+              </div>
+            </Popup>
           </Marker>
         );
       })}

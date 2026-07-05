@@ -1,0 +1,161 @@
+
+> react-example@0.0.0 dev
+> tsx server.ts
+
+[1G[0KServer running on http://localhost:5000
+[DB] initializing pool for ZSKWEB...
+[2m4:23:08 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:171:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+[2m4:23:08 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:171:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7688:5)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7713:14)
+    at doubleInvokeEffectsOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:8924:125)
+[2m4:23:08 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:178:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7688:5)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7713:14)
+    at doubleInvokeEffectsOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:8924:125)
+[2m4:23:08 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:178:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:178:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5) [33m(x2)[39m
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:171:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7688:5)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7713:14)
+    at doubleInvokeEffectsOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:8924:125)
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:171:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:178:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7688:5)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7713:14)
+    at doubleInvokeEffectsOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:8924:125)
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:171:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:178:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+    at commitPassiveMountOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7606:5)
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:178:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7688:5)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7713:14)
+    at doubleInvokeEffectsOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:8924:125)
+[2m4:23:09 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://localhost:5000/src/hooks/useApiCache.ts:9:20)
+    at http://localhost:5000/src/App.tsx:171:3
+    at Object.react_stack_bottom_frame (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:12904:13)
+    at runWithFiberInDEV (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:851:66)
+    at commitHookEffectListMount (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6617:153)
+    at commitHookPassiveMountEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:6652:55)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7688:5)
+    at reconnectPassiveEffects (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:7713:14)
+    at doubleInvokeEffectsOnFiber (http://localhost:5000/node_modules/.vite/deps/react-dom_client.js?v=43246abe:8924:125)
