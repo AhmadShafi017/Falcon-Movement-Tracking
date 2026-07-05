@@ -678,6 +678,133 @@ async function startServer() {
     }
   });
 
+  // Shared canonical daily-history query — this is the SINGLE SOURCE OF TRUTH for an
+  // employee's tracked points on a given date. Both /api/movement (map markers) and
+  // /api/employee-trail (Operational Report rows) call this exact same function so
+  // the marker count on the map always matches the row count in the report.
+  async function fetchDailyHistory(empId: string, targetDateStr: string) {
+    let result;
+    // Check if there is any attendance record for this emp on targetDate
+    const attendCheck = await runQuery(
+      `SELECT COUNT(*) as CNT FROM ATTEND_MST WHERE EMP_ID = :id AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')`,
+      { id: empId, tDate: targetDateStr }
+    );
+
+    const countVal = (attendCheck.rows && (attendCheck.rows[0] as any).CNT) ? parseInt((attendCheck.rows[0] as any).CNT) :
+                     (attendCheck.rows && (attendCheck.rows[0] as any)[0] ? parseInt((attendCheck.rows[0] as any)[0]) : 0);
+
+    if (countVal > 0) {
+      result = await runQuery(
+        `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+            -- FIRST ATTENDANCE
+            SELECT 
+                FIRST_IN_TIME AS EVENT_TIME,
+                A.IN_LAT AS LATITUDE,
+                A.IN_LONG AS LONGITUDE,
+                'ATTEND_MST' AS SOURCE,
+                'Attendance In' as PLACE_NAME
+            FROM ATTEND_MST A
+            CROSS JOIN (
+                SELECT MIN(
+                    TO_DATE(
+                        TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                        || ' ' ||
+                        TRIM(IN_TIME),
+                        'DD-MM-YYYY HH:MI AM'
+                    )
+                ) AS FIRST_IN_TIME
+                FROM ATTEND_MST
+                WHERE EMP_ID = :id
+                  AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+            ) X
+            WHERE A.EMP_ID = :id
+              AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+            UNION ALL
+
+            -- USER LOCATION AFTER FIRST ATTENDANCE
+            SELECT 
+                B.APPLY_DATE_TIME AS EVENT_TIME,
+                B.GEO_LAT AS LATITUDE,
+                B.GEO_LONG AS LONGITUDE,
+                'USER_LOCATION' AS SOURCE,
+                'Tracked Location' as PLACE_NAME
+            FROM USER_LOCATION B
+            CROSS JOIN (
+                SELECT MIN(
+                    TO_DATE(
+                        TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                        || ' ' ||
+                        TRIM(IN_TIME),
+                        'DD-MM-YYYY HH:MI AM'
+                    )
+                ) AS FIRST_IN_TIME
+                FROM ATTEND_MST
+                WHERE EMP_ID = :id
+                  AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+            ) X
+            WHERE B.EMP_ID = :id
+              AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
+              AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
+
+            UNION ALL
+
+            -- LAST ATTENDANCE (OUT)
+            SELECT 
+                LAST_OUT_TIME AS EVENT_TIME,
+                A.OUT_LAT AS LATITUDE,
+                A.OUT_LONG AS LONGITUDE,
+                'ATTEND_MST_OUT' AS SOURCE,
+                'Attendance Out' as PLACE_NAME
+            FROM ATTEND_MST A
+            CROSS JOIN (
+                SELECT MAX(
+                    TO_DATE(
+                        TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
+                        || ' ' ||
+                        TRIM(OUT_TIME),
+                        'DD-MM-YYYY HH:MI AM'
+                    )
+                ) AS LAST_OUT_TIME
+                FROM ATTEND_MST
+                WHERE EMP_ID = :id
+                  AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+                  AND OUT_TIME IS NOT NULL
+            ) X
+            WHERE A.EMP_ID = :id
+              AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
+              AND A.OUT_TIME IS NOT NULL
+        )
+        ORDER BY EVENT_TIME ASC`,
+        { id: empId, tDate: targetDateStr }
+      );
+    } else {
+      // Fallback for unauthorized leave: pulling they key historical coordinates
+      result = await runQuery(
+        `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
+            SELECT 
+                APPLY_DATE_TIME AS EVENT_TIME,
+                GEO_LAT AS LATITUDE,
+                GEO_LONG AS LONGITUDE,
+                  'USER_LOCATION' AS SOURCE,
+                  'Last Known Location' as PLACE_NAME,
+                  ROW_NUMBER() OVER (PARTITION BY EMP_ID ORDER BY APPLY_DATE_TIME DESC) as rn
+              FROM USER_LOCATION
+              WHERE EMP_ID = :id
+          ) WHERE rn = 1`,
+        { id: empId }
+      );
+    }
+
+    return (result.rows as any[]).map(row => ({
+      lat: parseFloat(row.LATITUDE),
+      lng: parseFloat(row.LONGITUDE),
+      time: row.EVENT_TIME,
+      name: row.PLACE_NAME,
+      source: row.SOURCE
+    }));
+  }
+
   // Updated Movement tracking API for single date and joined metadata
   app.get("/api/movement", async (req, res) => {
     const { empId, date } = req.query;
@@ -726,127 +853,8 @@ async function startServer() {
         });
       }
 
-      // 3. Fetch movement data using the combined SQL logic provided (connects, executes, disconnects)
-      let result;
-      // Check if there is any attendance record for this emp on targetDate
-      const attendCheck = await runQuery(
-        `SELECT COUNT(*) as CNT FROM ATTEND_MST WHERE EMP_ID = :id AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')`,
-        { id: empId, tDate: targetDateStr }
-      );
-      
-      const countVal = (attendCheck.rows && (attendCheck.rows[0] as any).CNT) ? parseInt((attendCheck.rows[0] as any).CNT) : 
-                       (attendCheck.rows && (attendCheck.rows[0] as any)[0] ? parseInt((attendCheck.rows[0] as any)[0]) : 0);
-
-      if (countVal > 0) {
-        result = await runQuery(
-          `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
-              -- FIRST ATTENDANCE
-              SELECT 
-                  FIRST_IN_TIME AS EVENT_TIME,
-                  A.IN_LAT AS LATITUDE,
-                  A.IN_LONG AS LONGITUDE,
-                  'ATTEND_MST' AS SOURCE,
-                  'Attendance In' as PLACE_NAME
-              FROM ATTEND_MST A
-              CROSS JOIN (
-                  SELECT MIN(
-                      TO_DATE(
-                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                          || ' ' ||
-                          TRIM(IN_TIME),
-                          'DD-MM-YYYY HH:MI AM'
-                      )
-                  ) AS FIRST_IN_TIME
-                  FROM ATTEND_MST
-                  WHERE EMP_ID = :id
-                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-              ) X
-              WHERE A.EMP_ID = :id
-                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-
-              UNION ALL
-
-              -- USER LOCATION AFTER FIRST ATTENDANCE
-              SELECT 
-                  B.APPLY_DATE_TIME AS EVENT_TIME,
-                  B.GEO_LAT AS LATITUDE,
-                  B.GEO_LONG AS LONGITUDE,
-                  'USER_LOCATION' AS SOURCE,
-                  'Tracked Location' as PLACE_NAME
-              FROM USER_LOCATION B
-              CROSS JOIN (
-                  SELECT MIN(
-                      TO_DATE(
-                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                          || ' ' ||
-                          TRIM(IN_TIME),
-                          'DD-MM-YYYY HH:MI AM'
-                      )
-                  ) AS FIRST_IN_TIME
-                  FROM ATTEND_MST
-                  WHERE EMP_ID = :id
-                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-              ) X
-              WHERE B.EMP_ID = :id
-                AND B.APPLY_DATE_TIME >= X.FIRST_IN_TIME
-                AND TRUNC(B.APPLY_DATE_TIME) = TO_DATE(:tDate, 'YYYY-MM-DD')
-
-              UNION ALL
-
-              -- LAST ATTENDANCE (OUT)
-              SELECT 
-                  LAST_OUT_TIME AS EVENT_TIME,
-                  A.OUT_LAT AS LATITUDE,
-                  A.OUT_LONG AS LONGITUDE,
-                  'ATTEND_MST_OUT' AS SOURCE,
-                  'Attendance Out' as PLACE_NAME
-              FROM ATTEND_MST A
-              CROSS JOIN (
-                  SELECT MAX(
-                      TO_DATE(
-                          TO_CHAR(APPLY_DATE,'DD-MM-YYYY')
-                          || ' ' ||
-                          TRIM(OUT_TIME),
-                          'DD-MM-YYYY HH:MI AM'
-                      )
-                  ) AS LAST_OUT_TIME
-                  FROM ATTEND_MST
-                  WHERE EMP_ID = :id
-                    AND TRUNC(APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-                    AND OUT_TIME IS NOT NULL
-              ) X
-              WHERE A.EMP_ID = :id
-                AND TRUNC(A.APPLY_DATE) = TO_DATE(:tDate, 'YYYY-MM-DD')
-                AND A.OUT_TIME IS NOT NULL
-          )
-          ORDER BY EVENT_TIME ASC`,
-          { id: empId, tDate: targetDateStr }
-        );
-      } else {
-        // Fallback for unauthorized leave: pulling they key historical coordinates
-        result = await runQuery(
-          `SELECT TO_CHAR(EVENT_TIME, 'YYYY-MM-DD"T"HH24:MI:SS') as EVENT_TIME, LATITUDE, LONGITUDE, SOURCE, PLACE_NAME FROM (
-              SELECT 
-                  APPLY_DATE_TIME AS EVENT_TIME,
-                  GEO_LAT AS LATITUDE,
-                  GEO_LONG AS LONGITUDE,
-                  'USER_LOCATION' AS SOURCE,
-                  'Last Known Location' as PLACE_NAME,
-                  ROW_NUMBER() OVER (PARTITION BY EMP_ID ORDER BY APPLY_DATE_TIME DESC) as rn
-              FROM USER_LOCATION
-              WHERE EMP_ID = :id
-          ) WHERE rn = 1`,
-          { id: empId }
-        );
-      }
-
-      const history = (result.rows as any[]).map(row => ({
-        lat: parseFloat(row.LATITUDE),
-        lng: parseFloat(row.LONGITUDE),
-        time: row.EVENT_TIME,
-        name: row.PLACE_NAME,
-        source: row.SOURCE
-      }));
+      // 3. Fetch movement data using the shared canonical helper
+      const history = await fetchDailyHistory(empId as string, targetDateStr);
 
       res.json({
         id: emp.EMP_ID,
@@ -866,6 +874,105 @@ async function startServer() {
 
     } catch (err: any) {
       handleOracleError(err, res, "Movement Tracker");
+    }
+  });
+
+  // Canonical employee trail across a date range — reuses the exact same fetchDailyHistory
+  // logic as /api/movement so the Operational Report's trail rows always match the number
+  // of markers shown on the Movement Tracking map for the same employee/date(s).
+  app.get("/api/employee-trail", async (req, res) => {
+    const { empId, fromDate, toDate } = req.query;
+
+    if (!empId) {
+      return res.status(400).json({ error: "Missing empId parameter" });
+    }
+
+    try {
+      const empResult = await runQuery(
+        `SELECT EMP_ID, EMP_NAME, EMP_LEVEL, DIV_CODE, NH_CODE, NH_NAME, ZONE_CODE, ZONE_NAME, REGION_CODE, REGION_NAME, AREA_CODE, AREA_NAME, TERR_CODE, TERR_NAME
+         FROM EMPLOYEE_HIERARCHY 
+         WHERE EMP_ID = :id`,
+        [empId]
+      );
+
+      if (!empResult.rows || empResult.rows.length === 0) {
+        return res.status(404).json({ error: `Employee ${empId} not found in hierarchy.` });
+      }
+
+      const emp: any = empResult.rows[0];
+
+      const startStr = (fromDate as string) || new Date().toISOString().split('T')[0];
+      const endStr = (toDate as string) || startStr;
+
+      const start = new Date(startStr + 'T00:00:00');
+      const end = new Date(endStr + 'T00:00:00');
+
+      // Cap the range to avoid runaway queries (consistent with report-data range caps elsewhere)
+      const MAX_DAYS = 31;
+      const dayMs = 24 * 60 * 60 * 1000;
+      const totalDays = Math.floor((end.getTime() - start.getTime()) / dayMs) + 1;
+      const daysToFetch = Math.min(Math.max(totalDays, 1), MAX_DAYS);
+
+      const rows: any[] = [];
+
+      for (let i = 0; i < daysToFetch; i++) {
+        const d = new Date(start.getTime() + i * dayMs);
+        const dStr = d.toISOString().split('T')[0];
+
+        const history = await fetchDailyHistory(empId as string, dStr);
+
+        for (const point of history) {
+          rows.push({
+            TERR_CODE: emp.TERR_CODE,
+            TERR_NAME: emp.TERR_NAME,
+            EMP_ID: emp.EMP_ID,
+            EMP_NAME: emp.EMP_NAME,
+            EMP_LEVEL: emp.EMP_LEVEL,
+            DIV_CODE: emp.DIV_CODE,
+            APPLY_DATE: dStr,
+            TIME_STR: point.time,
+            LATITUDE: point.lat,
+            LONGITUDE: point.lng,
+            EVENT_NAME: point.name,
+            SOURCE: point.source,
+          });
+        }
+      }
+
+      res.json(rows);
+    } catch (err: any) {
+      handleOracleError(err, res, "Employee Trail");
+    }
+  });
+
+  // Reverse geocode a lat/lng pair into a real human-readable address using the Google
+  // Maps Geocoding API. Always performs a live lookup — results are NEVER cached, per
+  // requirement, so the address reflects the true current geocoder response every time.
+  app.get("/api/geocode", async (req, res) => {
+    const { lat, lng } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ error: "Missing lat/lng parameters" });
+    }
+
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY is not configured" });
+    }
+
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${encodeURIComponent(lat as string)},${encodeURIComponent(lng as string)}&key=${apiKey}`;
+      const response = await fetch(url);
+      const data: any = await response.json();
+
+      if (data.status === "OK" && data.results && data.results.length > 0) {
+        res.json({ address: data.results[0].formatted_address, status: "OK" });
+      } else {
+        res.json({ address: null, status: data.status || "UNKNOWN_ERROR", errorMessage: data.error_message });
+      }
+    } catch (err: any) {
+      console.error("Geocode Error:", err.message);
+      res.status(500).json({ error: err.message });
     }
   });
 

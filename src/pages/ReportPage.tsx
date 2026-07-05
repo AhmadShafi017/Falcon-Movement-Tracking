@@ -3,7 +3,42 @@ import { Calendar, Search, Trash2, Download, ExternalLink, MapPin, ChevronLeft, 
 import { motion, AnimatePresence } from 'motion/react';
 import { Employee } from '../types';
 import { getDesignation, getTeam } from '../utils/formatters';
-import { getInstantLocationName } from '../utils/geocoder';
+
+// Live reverse-geocoding via Google Maps (server proxy). Always performs a fresh network
+// lookup per call — results are NEVER cached/stored, per requirement.
+const resolveLiveAddress = async (lat: any, lng: any): Promise<string> => {
+  if (lat === null || lat === undefined || lng === null || lng === undefined || lat === '' || lng === '') {
+    return 'Unknown Location';
+  }
+  try {
+    const res = await fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+    const data = await res.json();
+    if (data.address) return data.address;
+    return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+  } catch {
+    return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+  }
+};
+
+// Displays a human-readable address for a coordinate pair, resolved live (no caching)
+// from the Google Maps Geocoding API every time the component mounts.
+const LiveLocationName: React.FC<{ lat: any; lng: any }> = ({ lat, lng }) => {
+  const [address, setAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAddress(null);
+    resolveLiveAddress(lat, lng).then(addr => {
+      if (!cancelled) setAddress(addr);
+    });
+    return () => { cancelled = true; };
+  }, [lat, lng]);
+
+  if (address === null) {
+    return <span className="text-slate-400 italic">Resolving address…</span>;
+  }
+  return <span>{address}</span>;
+};
 
 interface ReportPageProps {
   employees: Employee[];
@@ -177,52 +212,71 @@ export const ReportPage: React.FC<ReportPageProps> = ({
     setCurrentPage('MOVEMENT');
   };
 
-  // CSV Export helper
-  const handleExportCSV = () => {
-    if (filteredReportData.length === 0) return;
-    
-    const headers = [
-      "Territory Code", 
-      "Territory Name", 
-      "Emp. Id.", 
-      "Emp. Name", 
-      "Designation", 
-      "Division", 
-      "Date", 
-      "Time", 
-      "Event Type",
-      "Coordinates",
-      "Location Address"
-    ];
-    
-    const csvRows = [headers.join(",")];
-    
-    filteredReportData.forEach(row => {
-      const resolvedAddress = getInstantLocationName(row.LATITUDE, row.LONGITUDE, row.TERR_NAME);
-      const values = [
-        `"${row.TERR_CODE || ''}"`,
-        `"${row.TERR_NAME || ''}"`,
-        `"${row.EMP_ID || ''}"`,
-        `"${row.EMP_NAME || ''}"`,
-        `"${getDesignation(row.EMP_LEVEL)}"`,
-        `"${getTeam(row.DIV_CODE)}"`,
-        `"${row.APPLY_DATE || ''}"`,
-        `"${row.TIME_STR || ''}"`,
-        `"${row.EVENT_NAME || 'Tracked Location'}"`,
-        `"${row.LATITUDE ? Number(row.LATITUDE).toFixed(5) : ''}, ${row.LONGITUDE ? Number(row.LONGITUDE).toFixed(5) : ''}"`,
-        `"${resolvedAddress.replace(/"/g, '""')}"`
+  // CSV Export helper — resolves each row's address live via Google Maps (no caching)
+  const [exportingCSV, setExportingCSV] = useState<boolean>(false);
+  const handleExportCSV = async () => {
+    if (filteredReportData.length === 0 || exportingCSV) return;
+    setExportingCSV(true);
+
+    try {
+      const headers = [
+        "Territory Code",
+        "Territory Name",
+        "Emp. Id.",
+        "Emp. Name",
+        "Designation",
+        "Division",
+        "Date",
+        "Time",
+        "Event Type",
+        "Coordinates",
+        "Location Address"
       ];
-      csvRows.push(values.join(","));
-    });
-    
-    const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Employee_Registry_Report_${fDate}_to_${tDate}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+      const csvRows = [headers.join(",")];
+
+      // Resolve addresses live with limited concurrency to avoid overwhelming the geocoder
+      const CONCURRENCY = 5;
+      const addresses: string[] = new Array(filteredReportData.length);
+      let cursor = 0;
+      const workers = Array.from({ length: Math.min(CONCURRENCY, filteredReportData.length) }, async () => {
+        while (cursor < filteredReportData.length) {
+          const i = cursor++;
+          const row = filteredReportData[i];
+          addresses[i] = await resolveLiveAddress(row.LATITUDE, row.LONGITUDE);
+        }
+      });
+      await Promise.all(workers);
+
+      filteredReportData.forEach((row, i) => {
+        const resolvedAddress = addresses[i];
+        const values = [
+          `"${row.TERR_CODE || ''}"`,
+          `"${row.TERR_NAME || ''}"`,
+          `"${row.EMP_ID || ''}"`,
+          `"${row.EMP_NAME || ''}"`,
+          `"${getDesignation(row.EMP_LEVEL)}"`,
+          `"${getTeam(row.DIV_CODE)}"`,
+          `"${row.APPLY_DATE || ''}"`,
+          `"${row.TIME_STR || ''}"`,
+          `"${row.EVENT_NAME || 'Tracked Location'}"`,
+          `"${row.LATITUDE ? Number(row.LATITUDE).toFixed(5) : ''}, ${row.LONGITUDE ? Number(row.LONGITUDE).toFixed(5) : ''}"`,
+          `"${resolvedAddress.replace(/"/g, '""')}"`
+        ];
+        csvRows.push(values.join(","));
+      });
+
+      const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Employee_Registry_Report_${fDate}_to_${tDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setExportingCSV(false);
+    }
   };
 
   // Dynamic client-side instant filter by Emp ID, Name, or Territory
@@ -278,10 +332,47 @@ export const ReportPage: React.FC<ReportPageProps> = ({
     return uniqueEmployeesInReport.slice(startIdx, startIdx + rosterItemsPerPage);
   }, [uniqueEmployeesInReport, rosterPageNum]);
 
-  const selectedEmpTraces = useMemo(() => {
-    if (!selectedRosterEmpId) return [];
-    return filteredReportData.filter(row => row.EMP_ID === selectedRosterEmpId);
-  }, [filteredReportData, selectedRosterEmpId]);
+  // Canonical per-employee trail — fetched from the SAME server-side logic (fetchDailyHistory)
+  // that drives the Movement Tracking map markers, so record counts always match exactly.
+  const [empTrailData, setEmpTrailData] = useState<any[]>([]);
+  const [trailLoading, setTrailLoading] = useState<boolean>(false);
+  const [trailError, setTrailError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedRosterEmpId) {
+      setEmpTrailData([]);
+      return;
+    }
+    let cancelled = false;
+    setTrailLoading(true);
+    setTrailError(null);
+    const params = new URLSearchParams({
+      empId: selectedRosterEmpId,
+      fromDate: fDate,
+      toDate: tDate,
+    });
+    fetch(`/api/employee-trail?${params.toString()}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Server returned error status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (!cancelled) setEmpTrailData(data);
+      })
+      .catch(err => {
+        if (!cancelled) {
+          console.error('Employee Trail Fetch Failed:', err);
+          setTrailError(err.message || 'Failed to load employee trail.');
+          setEmpTrailData([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setTrailLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [selectedRosterEmpId, fDate, tDate]);
+
+  const selectedEmpTraces = empTrailData;
 
   return (
     <div className="flex-1 h-full flex flex-col overflow-hidden bg-slate-50 p-6">
@@ -629,23 +720,24 @@ export const ReportPage: React.FC<ReportPageProps> = ({
             {filteredReportData.length > 0 && (
               <button 
                 onClick={handleExportCSV}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/10 transition-colors cursor-pointer"
+                disabled={exportingCSV}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/10 transition-colors cursor-pointer"
               >
                 <Download size={13} />
-                Export Active Filter (CSV)
+                {exportingCSV ? 'Resolving Addresses…' : 'Export Active Filter (CSV)'}
               </button>
             )}
           </div>
 
-          {errorMsg && (
+          {(errorMsg || trailError) && (
             <div className="p-6 bg-red-50 text-red-700 text-xs font-bold border-b border-red-100 shrink-0">
-              {errorMsg}
+              {errorMsg || trailError}
             </div>
           )}
 
           {/* Scrollable Trace Grid */}
           <div className="flex-1 overflow-x-auto overflow-y-auto h-full bg-white">
-            {loading ? (
+            {loading || trailLoading ? (
               <div className="h-full w-full flex flex-col items-center justify-center p-12 space-y-3 min-h-[300px]">
                 <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
                 <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mt-2">Querying tracking databases...</p>
@@ -697,7 +789,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                           </div>
                           <div className="text-[11px] font-extrabold text-slate-800 flex items-start gap-1 leading-snug">
                             <MapPin size={12} className="text-blue-500 shrink-0 mt-0.5" />
-                            <span>{getInstantLocationName(row.LATITUDE, row.LONGITUDE, row.TERR_NAME)}</span>
+                            <LiveLocationName lat={row.LATITUDE} lng={row.LONGITUDE} />
                           </div>
                         </div>
                       </td>

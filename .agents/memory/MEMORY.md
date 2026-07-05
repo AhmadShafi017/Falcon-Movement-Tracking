@@ -1,1 +1,2 @@
 - [Combined Express+Vite dev server](combined-express-vite-server.md) — single server.ts runs Express API + Vite middleware on one port; don't split into separate frontend/backend workflows.
+- [Movement map vs report trail parity](data-source-parity.md) — share one canonical query for any two views of the "same" trail data; watch for fake data generators disguised as real API calls.
