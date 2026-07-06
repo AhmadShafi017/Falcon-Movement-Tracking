@@ -1,0 +1,33 @@
+
+> react-example@0.0.0 dev
+> tsx server.ts
+
+[1G[0KServer running on http://localhost:5000
+[DB] initializing pool for ZSKWEB...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:17:52 AM[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m5:17:52 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+[2m5:17:52 AM[22m [36m[1m[vite][22m[39m server restarted.
+[2m5:17:53 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
