@@ -155,7 +155,12 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ message: string; instruction?: string; locked?: boolean } | null>(null);
   const [activePoint, setActivePoint] = useState<MovementPoint | null>(null);
-  const [targetDate, setTargetDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  // Use local date (not UTC toISOString) to avoid a day-offset in non-UTC timezones
+  const getLocalDateStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const [targetDate, setTargetDate] = useState<string>(getLocalDateStr());
   const [selectedEmpId, setSelectedEmpId] = useState<string>('');
   const [showHospitals, setShowHospitals] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
@@ -191,7 +196,7 @@ export default function App() {
 
   // Fetch allLatestLocations when date or currentPage changes
   useEffect(() => {
-    const dateToFetch = currentPage === 'LOCATION' ? new Date().toISOString().split('T')[0] : targetDate;
+    const dateToFetch = currentPage === 'LOCATION' ? getLocalDateStr() : targetDate;
     cachedFetch<any>(`/api/all-latest-locations?date=${dateToFetch}`).then(data => {
       const list = Array.isArray(data) ? data : (data.employees || []);
       setAllLatestLocations(Array.from(new Map(list.map((item: any) => [item.EMP_ID, item])).values()));
@@ -211,7 +216,7 @@ export default function App() {
     setActivePoint(null);
     setStatusFilter('all');
 
-    const dateToFetch = currentPage === 'LOCATION' ? new Date().toISOString().split('T')[0] : targetDate;
+    const dateToFetch = currentPage === 'LOCATION' ? getLocalDateStr() : targetDate;
     cachedFetch<any>(`/api/all-latest-locations?date=${dateToFetch}`).then(data => {
       const list = Array.isArray(data) ? data : (data.employees || []);
       setAllLatestLocations(Array.from(new Map(list.map((item: any) => [item.EMP_ID, item])).values()));
@@ -271,11 +276,12 @@ export default function App() {
       fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
         .then(res => res.json())
         .then(data => {
-          if (data.address) {
-            setAddressCache(p => ({ ...p, [key]: data.address }));
-          }
+          // Always set a result so the UI never stays stuck on "Resolving..."
+          setAddressCache(p => ({ ...p, [key]: data.address || 'Unknown Location' }));
         })
-        .catch(console.error);
+        .catch(() => {
+          setAddressCache(p => ({ ...p, [key]: 'Unknown Location' }));
+        });
       return prev;
     });
   };

@@ -25,9 +25,10 @@ const resolveLiveAddress = async (lat: any, lng: any): Promise<string> => {
     const data = await res.json();
     if (data.display_name) return data.display_name;
   } catch {
-    // fall through to lat/lng fallback
+    // fall through
   }
-  return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+  // Never show raw coordinates — return a generic label instead
+  return 'Unknown Location';
 };
 
 // Displays a human-readable address for a coordinate pair, resolved live (no caching)
@@ -67,7 +68,12 @@ export const ReportPage: React.FC<ReportPageProps> = ({
 }) => {
   // Filter Inputs State
   const getToday = () => {
-    return new Date().toISOString().split('T')[0];
+    // Use local date (not UTC) to avoid a day-offset in non-UTC timezones
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   const [fDate, setFDate] = useState<string>(getToday());
