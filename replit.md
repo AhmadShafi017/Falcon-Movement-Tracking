@@ -55,7 +55,7 @@ Visiting `/` or `/mtracking` redirects to the movement tracking module.
 | `ORACLE_USER` | ✅ | Oracle DB username |
 | `ORACLE_PASSWORD` | ✅ | Oracle DB password |
 | `ORACLE_CONNECTION_STRING` | ✅ | e.g. `hostname:port/service_name` |
-| `GOOGLE_MAPS_API_KEY` | ✅ | Reverse geocoding — converts GPS coords to location names in map popups, movement ledger, report table, and CSV export |
+| `GOOGLE_MAPS_API_KEY` | — | Reverse geocoding — improves address accuracy. If omitted, the server falls back to OpenStreetMap Nominatim automatically (no key needed, location names still appear) |
 | `MOVEMENT_TRACKING_API_KEY` | — | External API security code (default: `FALCON_SECURE_TRACE_2026`) |
 | `PORT` | — | Server port (default: 5000) |
 
