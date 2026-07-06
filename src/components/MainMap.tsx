@@ -187,8 +187,6 @@ interface MainMapProps {
   setShowHospitals: (v: boolean) => void;
   showCustomers: boolean;
   setShowCustomers: (v: boolean) => void;
-  showSubordinates: boolean;
-  setShowSubordinates: (v: boolean) => void;
   pois: any[];
   setPois: React.Dispatch<React.SetStateAction<any[]>>;
   setPoiLoading: (v: boolean) => void;
@@ -211,7 +209,7 @@ interface MainMapProps {
 }
 
 export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
-  center, zoom, mapStyle, showHospitals, setShowHospitals, showCustomers, setShowCustomers, showSubordinates, setShowSubordinates, pois, setPois, setPoiLoading,
+  center, zoom, mapStyle, showHospitals, setShowHospitals, showCustomers, setShowCustomers, pois, setPois, setPoiLoading,
   selDiv, selNH, selZone, selRegion, selArea, selTerr,
   filteredGlobalLocations, currentPage, selectedEmpId, setSelectedEmpId, syncHierarchy,
   location, activePoint, groupedPathCoordinates, addressCache, handlePointSelect
@@ -443,18 +441,6 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
             className={`w-8 h-4 rounded-full relative transition-colors ${showCustomers ? 'bg-slate-800' : 'bg-slate-200'}`}
           >
             <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${showCustomers ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-          </button>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded-lg flex items-center justify-center text-[9px] text-blue-700 font-bold">S</div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Subordinates</span>
-          </div>
-          <button 
-            onClick={() => setShowSubordinates(!showSubordinates)}
-            className={`w-8 h-4 rounded-full relative transition-colors ${showSubordinates ? 'bg-blue-600' : 'bg-slate-200'}`}
-          >
-            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${showSubordinates ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
           </button>
         </div>
       </div>

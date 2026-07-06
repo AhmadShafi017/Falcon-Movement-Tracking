@@ -159,7 +159,6 @@ export default function App() {
   const [selectedEmpId, setSelectedEmpId] = useState<string>('');
   const [showHospitals, setShowHospitals] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
-  const [showSubordinates, setShowSubordinates] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -322,23 +321,7 @@ export default function App() {
         const levelMap: Record<string, string> = { 'RM': '4', 'AM': '5', 'MPO': '6' };
         const targetLevel = parseInt(levelMap[roleFilter]);
         const empLevel = parseInt(String(e.EMP_LEVEL));
-        if (showSubordinates && roleFilter !== 'MPO') {
-          // Show this role AND all subordinate levels (higher level number = lower in hierarchy)
-          if (empLevel < targetLevel || empLevel > 6) return false;
-        } else {
-          if (empLevel !== targetLevel) return false;
-        }
-      } else if (!showSubordinates && currentPage === 'MOVEMENT') {
-        // No roleFilter but subordinates hidden: restrict to the level that matches
-        // the deepest selected hierarchy filter so only the "owner" of that level shows.
-        // This only applies on the Movement page — Current Location should show all levels.
-        const empLevel = parseInt(String(e.EMP_LEVEL));
-        let targetLevel: number | null = null;
-        if (selTerr)                        targetLevel = 6; // MPO owns territory
-        else if (selArea)                   targetLevel = 5; // AM owns area
-        else if (selRegion || selZone || selNH) targetLevel = 4; // RM owns region/zone
-        // If only division is selected (or nothing), no level restriction
-        if (targetLevel !== null && empLevel !== targetLevel) return false;
+        if (empLevel !== targetLevel) return false;
       }
 
       if (statusFilter !== 'all') {
@@ -362,7 +345,7 @@ export default function App() {
       const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
       return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch;
     });
-  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage, statusFilter, roleFilter, showSubordinates]);
+  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage, statusFilter, roleFilter]);
 
   const syncHierarchy = useCallback((gl: any) => {
     let divId = '';
@@ -418,7 +401,6 @@ export default function App() {
     totalDistance, filteredGlobalLocations, allLatestLocations,
     syncHierarchy, showHospitals, setShowHospitals: setShowHospitalsCallback,
     showCustomers, setShowCustomers: setShowCustomersCallback,
-    showSubordinates, setShowSubordinates,
     pois, setPois, setPoiLoading: setPoiLoadingCallback,
     statusFilter, setStatusFilter: setStatusFilterCallback,
     roleFilter, setRoleFilter: setRoleFilterCallback
@@ -433,7 +415,6 @@ export default function App() {
     totalDistance, filteredGlobalLocations, allLatestLocations,
     syncHierarchy, showHospitals, setShowHospitalsCallback,
     showCustomers, setShowCustomersCallback,
-    showSubordinates, setShowSubordinates,
     pois, setPois, setPoiLoadingCallback,
     statusFilter, setStatusFilterCallback,
     roleFilter, setRoleFilterCallback
