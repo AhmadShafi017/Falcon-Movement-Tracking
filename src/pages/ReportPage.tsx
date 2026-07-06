@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Calendar, Search, Trash2, Download, ExternalLink, MapPin, ChevronLeft, ChevronRight, Check, BarChart2, Filter, Activity, Users, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import * as XLSX from 'xlsx';
 import { Employee } from '../types';
 import { getDesignation, getTeam, toBDTimeString } from '../utils/formatters';
 
@@ -221,68 +222,66 @@ export const ReportPage: React.FC<ReportPageProps> = ({
     setCurrentPage('MOVEMENT');
   };
 
-  // CSV Export helper — resolves each row's address live via Google Maps (no caching)
-  const [exportingCSV, setExportingCSV] = useState<boolean>(false);
-  const handleExportCSV = async () => {
-    if (filteredReportData.length === 0 || exportingCSV) return;
-    setExportingCSV(true);
+  // Excel Export — resolves each trail row's address live, then writes an .xlsx file.
+  // Exports the currently-selected employee's location trail (same data shown in the table).
+  const [exportingExcel, setExportingExcel] = useState<boolean>(false);
+  const handleExportExcel = async () => {
+    if (!selectedRosterEmpId || selectedEmpTraces.length === 0 || exportingExcel) return;
+    setExportingExcel(true);
 
     try {
-      const headers = [
-        "Territory Code",
-        "Territory Name",
-        "Emp. Id.",
-        "Emp. Name",
-        "Designation",
-        "Division",
-        "Date",
-        "Time",
-        "Event Type",
-        "Location Address"
-      ];
-
-      const csvRows = [headers.join(",")];
-
-      // Resolve addresses live with limited concurrency to avoid overwhelming the geocoder
+      // Resolve all addresses with limited concurrency to avoid overwhelming the geocoder
       const CONCURRENCY = 5;
-      const addresses: string[] = new Array(filteredReportData.length);
+      const addresses: string[] = new Array(selectedEmpTraces.length);
       let cursor = 0;
-      const workers = Array.from({ length: Math.min(CONCURRENCY, filteredReportData.length) }, async () => {
-        while (cursor < filteredReportData.length) {
+      const workers = Array.from({ length: Math.min(CONCURRENCY, selectedEmpTraces.length) }, async () => {
+        while (cursor < selectedEmpTraces.length) {
           const i = cursor++;
-          const row = filteredReportData[i];
+          const row = selectedEmpTraces[i];
           addresses[i] = await resolveLiveAddress(row.LATITUDE, row.LONGITUDE);
         }
       });
       await Promise.all(workers);
 
-      filteredReportData.forEach((row, i) => {
-        const resolvedAddress = addresses[i];
-        const values = [
-          `"${row.TERR_CODE || ''}"`,
-          `"${row.TERR_NAME || ''}"`,
-          `"${row.EMP_ID || ''}"`,
-          `"${row.EMP_NAME || ''}"`,
-          `"${getDesignation(row.EMP_LEVEL)}"`,
-          `"${getTeam(row.DIV_CODE)}"`,
-          `"${row.APPLY_DATE || ''}"`,
-          `"${row.TIME_STR ? toBDTimeString(row.TIME_STR) : ''}"`,
-          `"${row.EVENT_NAME || 'Tracked Location'}"`,
-          `"${resolvedAddress.replace(/"/g, '""')}"`
-        ];
-        csvRows.push(values.join(","));
-      });
+      // Build rows matching the trail table columns exactly
+      const selectedEmp = uniqueEmployeesInReport.find(e => e.EMP_ID === selectedRosterEmpId);
+      const sheetRows = selectedEmpTraces.map((row, i) => ({
+        'Territory Code': row.TERR_CODE || '',
+        'Territory Name': row.TERR_NAME || '',
+        'Emp. ID': row.EMP_ID || '',
+        'Emp. Name': row.EMP_NAME || selectedEmp?.EMP_NAME || '',
+        'Designation': getDesignation(row.EMP_LEVEL || selectedEmp?.EMP_LEVEL || ''),
+        'Division': getTeam(row.DIV_CODE || selectedEmp?.DIV_CODE || ''),
+        'Date': row.APPLY_DATE || '',
+        'Time': row.TIME_STR ? toBDTimeString(row.TIME_STR) : '',
+        'Event Type': row.EVENT_NAME || 'Tracked Location',
+        'Location Name': addresses[i] || '',
+      }));
 
-      const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Employee_Registry_Report_${fDate}_to_${tDate}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const worksheet = XLSX.utils.json_to_sheet(sheetRows);
+
+      // Set column widths for readability
+      worksheet['!cols'] = [
+        { wch: 15 }, // Territory Code
+        { wch: 25 }, // Territory Name
+        { wch: 12 }, // Emp. ID
+        { wch: 28 }, // Emp. Name
+        { wch: 30 }, // Designation
+        { wch: 15 }, // Division
+        { wch: 12 }, // Date
+        { wch: 12 }, // Time
+        { wch: 18 }, // Event Type
+        { wch: 60 }, // Location Name
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      const sheetName = (selectedEmp?.EMP_NAME || 'Trail').slice(0, 31); // Excel sheet name max 31 chars
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+      const fileName = `Location_Trail_${selectedEmp?.EMP_NAME?.replace(/[^a-zA-Z0-9]/g, '_') || selectedRosterEmpId}_${fDate}_to_${tDate}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
     } finally {
-      setExportingCSV(false);
+      setExportingExcel(false);
     }
   };
 
@@ -724,14 +723,14 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                 </p>
               )}
             </div>
-            {filteredReportData.length > 0 && (
-              <button 
-                onClick={handleExportCSV}
-                disabled={exportingCSV}
+            {selectedRosterEmpId && selectedEmpTraces.length > 0 && (
+              <button
+                onClick={handleExportExcel}
+                disabled={exportingExcel}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/10 transition-colors cursor-pointer"
               >
                 <Download size={13} />
-                {exportingCSV ? 'Resolving Addresses…' : 'Export Active Filter (CSV)'}
+                {exportingExcel ? 'Resolving Addresses…' : 'Export Trail to Excel (.xlsx)'}
               </button>
             )}
           </div>
