@@ -437,7 +437,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
 
                 {/* Role Filter Dropdown */}
                 <div className="space-y-1">
-                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">Role</label>
+                  <label className="text-[8px] font-bold text-slate-400 uppercase tracking-wider ml-1">DESIGNATION</label>
                   <select
                     value={roleFilter}
                     onChange={(e) => {
@@ -446,44 +446,11 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                     }}
                     className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-50/50"
                   >
-                    <option value="">All Roles</option>
+                    <option value="">All DESIGNATION</option>
                     <option value="RM">All RM</option>
                     <option value="AM">All AM</option>
                     <option value="MPO">All MPO</option>
                   </select>
-                  {roleFilter && (
-                    <div className="relative mt-1">
-                      {(() => {
-                        const levelMap: Record<string, string> = { 'RM': '4', 'AM': '5', 'MPO': '6' };
-                        const level = levelMap[roleFilter];
-                        const filtered = employees.filter(e => e.EMP_LEVEL === level).slice(0, 8);
-                        if (filtered.length === 0) return null;
-                        return (
-                          <div className="bg-white border border-slate-100 rounded-lg shadow-sm max-h-36 overflow-y-auto custom-scrollbar">
-                            {filtered.map(emp => (
-                              <button
-                                key={emp.EMP_ID}
-                                onClick={() => {
-                                  setSelectedEmpId(emp.EMP_ID);
-                                  setSelNH(emp.NH_NAME || '');
-                                  setSelZone(emp.ZONE_NAME || '');
-                                  setSelRegion(emp.REGION_NAME || '');
-                                  setSelArea(emp.AREA_NAME || '');
-                                  setSelTerr(emp.TERR_NAME || '');
-                                  setSearchQuery('');
-                                  setRoleFilter('');
-                                }}
-                                className="w-full text-left px-3 py-2 hover:bg-emerald-50 border-b border-slate-50 last:border-0 text-[10px] font-bold text-slate-700"
-                              >
-                                {emp.EMP_NAME}
-                                <span className="text-[8px] text-slate-400 font-mono ml-2">{emp.EMP_ID}</span>
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
                 </div>
 
                 {/* Region Name Selector */}

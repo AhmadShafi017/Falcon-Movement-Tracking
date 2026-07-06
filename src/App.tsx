@@ -159,6 +159,7 @@ export default function App() {
   const [selectedEmpId, setSelectedEmpId] = useState<string>('');
   const [showHospitals, setShowHospitals] = useState(false);
   const [showCustomers, setShowCustomers] = useState(false);
+  const [showSubordinates, setShowSubordinates] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -263,15 +264,43 @@ export default function App() {
     }
   }, [selNH, selZone, selRegion, selArea, selTerr, employees, selectedEmpId]);
 
-  // Fetch address for active point
-  useEffect(() => {
-    if (activePoint && !addressCache[`${activePoint.lat}-${activePoint.lng}`]) {
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${activePoint.lat}&lon=${activePoint.lng}&zoom=18`)
+  // Geocode a single coordinate via the server-side Google Maps proxy.
+  const geocodePoint = (lat: number, lng: number) => {
+    const key = `${lat}-${lng}`;
+    setAddressCache(prev => {
+      if (prev[key]) return prev; // already cached
+      fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
         .then(res => res.json())
-        .then(data => setAddressCache(prev => ({ ...prev, [`${activePoint.lat}-${activePoint.lng}`]: data.display_name })))
+        .then(data => {
+          if (data.address) {
+            setAddressCache(p => ({ ...p, [key]: data.address }));
+          }
+        })
         .catch(console.error);
+      return prev;
+    });
+  };
+
+  // When a new location loads, geocode every point in its history so the
+  // movement ledger and map markers always show real addresses, not coordinates.
+  useEffect(() => {
+    if (!location?.history) return;
+    location.history.forEach((p: any) => {
+      if (p.lat && p.lng && !isNaN(p.lat) && !isNaN(p.lng)) {
+        geocodePoint(p.lat, p.lng);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
+  // Also geocode the active point immediately when selected (covers cases where
+  // the point wasn't in the history batch above).
+  useEffect(() => {
+    if (activePoint && !isNaN(activePoint.lat) && !isNaN(activePoint.lng)) {
+      geocodePoint(activePoint.lat, activePoint.lng);
     }
-  }, [activePoint, addressCache]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePoint]);
 
   const totalDistance = useMemo(() => {
     if (!location?.history || location.history.length < 2) return 0;
@@ -291,8 +320,24 @@ export default function App() {
       // Role-based filtering (RM=Level4, AM=Level5, MPO=Level6)
       if (roleFilter) {
         const levelMap: Record<string, string> = { 'RM': '4', 'AM': '5', 'MPO': '6' };
-        const targetLevel = levelMap[roleFilter];
-        if (String(e.EMP_LEVEL) !== targetLevel) return false;
+        const targetLevel = parseInt(levelMap[roleFilter]);
+        const empLevel = parseInt(String(e.EMP_LEVEL));
+        if (showSubordinates && roleFilter !== 'MPO') {
+          // Show this role AND all subordinate levels (higher level number = lower in hierarchy)
+          if (empLevel < targetLevel || empLevel > 6) return false;
+        } else {
+          if (empLevel !== targetLevel) return false;
+        }
+      } else if (!showSubordinates) {
+        // No roleFilter but subordinates hidden: restrict to the level that matches
+        // the deepest selected hierarchy filter so only the "owner" of that level shows.
+        const empLevel = parseInt(String(e.EMP_LEVEL));
+        let targetLevel: number | null = null;
+        if (selTerr)                        targetLevel = 6; // MPO owns territory
+        else if (selArea)                   targetLevel = 5; // AM owns area
+        else if (selRegion || selZone || selNH) targetLevel = 4; // RM owns region/zone
+        // If only division is selected (or nothing), no level restriction
+        if (targetLevel !== null && empLevel !== targetLevel) return false;
       }
 
       if (statusFilter !== 'all') {
@@ -316,7 +361,7 @@ export default function App() {
       const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
       return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch;
     });
-  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage, statusFilter, roleFilter]);
+  }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, currentPage, statusFilter, roleFilter, showSubordinates]);
 
   const syncHierarchy = useCallback((gl: any) => {
     let divId = '';
@@ -372,6 +417,7 @@ export default function App() {
     totalDistance, filteredGlobalLocations, allLatestLocations,
     syncHierarchy, showHospitals, setShowHospitals: setShowHospitalsCallback,
     showCustomers, setShowCustomers: setShowCustomersCallback,
+    showSubordinates, setShowSubordinates,
     pois, setPois, setPoiLoading: setPoiLoadingCallback,
     statusFilter, setStatusFilter: setStatusFilterCallback,
     roleFilter, setRoleFilter: setRoleFilterCallback
@@ -386,6 +432,7 @@ export default function App() {
     totalDistance, filteredGlobalLocations, allLatestLocations,
     syncHierarchy, showHospitals, setShowHospitalsCallback,
     showCustomers, setShowCustomersCallback,
+    showSubordinates, setShowSubordinates,
     pois, setPois, setPoiLoadingCallback,
     statusFilter, setStatusFilterCallback,
     roleFilter, setRoleFilterCallback

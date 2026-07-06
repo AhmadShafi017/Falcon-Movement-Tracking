@@ -249,7 +249,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
           </div>
           {/* Role Filter Dropdown */}
           <div className="space-y-1">
-            <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Role</label>
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">DESIGNATION</label>
             <select
               value={roleFilter}
               onChange={(e) => {
@@ -262,93 +262,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
               }}
               className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none appearance-none focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
             >
-              <option value="">All Roles</option>
+              <option value="">All DESIGNATION</option>
               <option value="RM">All RM</option>
               <option value="AM">All AM</option>
               <option value="MPO">All MPO</option>
             </select>
-            {roleFilter && (
-              <div className="relative mt-1">
-                {roleFilter === 'RM' && employees.filter(e => e.EMP_LEVEL === '4').length > 0 && (
-                  <div className="bg-white border border-slate-100 rounded-lg shadow-sm max-h-36 overflow-y-auto custom-scrollbar">
-                    {employees
-                      .filter(e => e.EMP_LEVEL === '4')
-                      .slice(0, 8)
-                      .map(emp => (
-                        <button
-                          key={emp.EMP_ID}
-                          onClick={() => {
-                            setSelectedEmpId(emp.EMP_ID);
-                            setSelNH(emp.NH_NAME || '');
-                            setSelZone(emp.ZONE_NAME || '');
-                            setSelRegion(emp.REGION_NAME || '');
-                            setSelArea(emp.AREA_NAME || '');
-                            setSelTerr(emp.TERR_NAME || '');
-                            setSearchQuery('');
-                            setRoleFilter('');
-                          }}
-                          className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-slate-50 last:border-0 text-[10px] font-bold text-slate-700"
-                        >
-                          {emp.EMP_NAME}
-                          <span className="text-[8px] text-slate-400 font-mono ml-2">{emp.EMP_ID}</span>
-                        </button>
-                      ))}
-                  </div>
-                )}
-                {roleFilter === 'AM' && employees.filter(e => e.EMP_LEVEL === '5').length > 0 && (
-                  <div className="bg-white border border-slate-100 rounded-lg shadow-sm max-h-36 overflow-y-auto custom-scrollbar">
-                    {employees
-                      .filter(e => e.EMP_LEVEL === '5')
-                      .slice(0, 8)
-                      .map(emp => (
-                        <button
-                          key={emp.EMP_ID}
-                          onClick={() => {
-                            setSelectedEmpId(emp.EMP_ID);
-                            setSelNH(emp.NH_NAME || '');
-                            setSelZone(emp.ZONE_NAME || '');
-                            setSelRegion(emp.REGION_NAME || '');
-                            setSelArea(emp.AREA_NAME || '');
-                            setSelTerr(emp.TERR_NAME || '');
-                            setSearchQuery('');
-                            setRoleFilter('');
-                          }}
-                          className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-slate-50 last:border-0 text-[10px] font-bold text-slate-700"
-                        >
-                          {emp.EMP_NAME}
-                          <span className="text-[8px] text-slate-400 font-mono ml-2">{emp.EMP_ID}</span>
-                        </button>
-                      ))}
-                  </div>
-                )}
-                {roleFilter === 'MPO' && employees.filter(e => e.EMP_LEVEL === '6').length > 0 && (
-                  <div className="bg-white border border-slate-100 rounded-lg shadow-sm max-h-36 overflow-y-auto custom-scrollbar">
-                    {employees
-                      .filter(e => e.EMP_LEVEL === '6')
-                      .slice(0, 8)
-                      .map(emp => (
-                        <button
-                          key={emp.EMP_ID}
-                          onClick={() => {
-                            setSelectedEmpId(emp.EMP_ID);
-                            setSelNH(emp.NH_NAME || '');
-                            setSelZone(emp.ZONE_NAME || '');
-                            setSelRegion(emp.REGION_NAME || '');
-                            setSelArea(emp.AREA_NAME || '');
-                            setSelTerr(emp.TERR_NAME || '');
-                            setSearchQuery('');
-                            setRoleFilter('');
-                          }}
-                          className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-slate-50 last:border-0 text-[10px] font-bold text-slate-700"
-                        >
-                          {emp.EMP_NAME}
-                          <span className="text-[8px] text-slate-400 font-mono ml-2">{emp.EMP_ID}</span>
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Region Name</label>
@@ -585,7 +503,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                                   {toBDTimeString(point.time)}
                                 </span>
                                 <p className={`text-[11px] font-bold tracking-tight mb-2 leading-relaxed mt-1 ${isActive ? 'text-slate-900' : 'text-slate-700'}`}>
-                                   {addressCache[`${point.lat}-${point.lng}`] || `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`}
+                                   {addressCache[`${point.lat}-${point.lng}`] || 'Resolving...'}
                                 </p>
                             </div>
                           </div>

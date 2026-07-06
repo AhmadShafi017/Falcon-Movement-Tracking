@@ -44,6 +44,8 @@ interface MovementPageProps {
   setPoiLoading: (v: boolean) => void;
   roleFilter: string;
   setRoleFilter: (v: string) => void;
+  showSubordinates: boolean;
+  setShowSubordinates: (v: boolean) => void;
 }
 
 export const MovementPage: React.FC<MovementPageProps> = (props) => {

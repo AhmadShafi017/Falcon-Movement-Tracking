@@ -238,7 +238,6 @@ export const ReportPage: React.FC<ReportPageProps> = ({
         "Date",
         "Time",
         "Event Type",
-        "Coordinates",
         "Location Address"
       ];
 
@@ -269,7 +268,6 @@ export const ReportPage: React.FC<ReportPageProps> = ({
           `"${row.APPLY_DATE || ''}"`,
           `"${row.TIME_STR ? toBDTimeString(row.TIME_STR) : ''}"`,
           `"${row.EVENT_NAME || 'Tracked Location'}"`,
-          `"${row.LATITUDE ? Number(row.LATITUDE).toFixed(5) : ''}, ${row.LONGITUDE ? Number(row.LONGITUDE).toFixed(5) : ''}"`,
           `"${resolvedAddress.replace(/"/g, '""')}"`
         ];
         csvRows.push(values.join(","));
@@ -791,9 +789,6 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                               'bg-blue-50 text-blue-600 border border-blue-100'
                             }`}>
                               {row.EVENT_NAME || 'Tracked'}
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono">
-                              {Number(row.LATITUDE).toFixed(4)}, {Number(row.LONGITUDE).toFixed(4)}
                             </span>
                           </div>
                           <div className="text-[11px] font-extrabold text-slate-800 flex items-start gap-1 leading-snug">

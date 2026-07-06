@@ -1,8 +1,0 @@
-
-> react-example@0.0.0 dev
-> tsx server.ts
-
-[1G[0KServer running on http://localhost:5000
-Diagnostic Connection Failed: Oracle credentials missing in environment. Please check Settings.
-Oracle Error [Movement Tracker]: Oracle credentials missing in environment. Please check Settings.
-Oracle Error [Movement Tracker]: Oracle credentials missing in environment. Please check Settings.

@@ -53,7 +53,7 @@ async function startServer() {
     // We also include Google AI Studio and preview domains (*.run.app, *.google.com, etc.) so that the preview renders correctly in the IDE!
     res.setHeader(
       "Content-Security-Policy",
-      "frame-ancestors 'self' https://your-main-project.com https://*.oracle.com http://localhost:* http://127.0.0.1:* https://*.google.com https://*.run.app https://ai.studio https://*.google https://*.aistudio.google https://*.usercontent.google https://*.aistudio.google.com;"
+      "frame-ancestors 'self' https://your-main-project.com https://*.oracle.com http://localhost:* http://127.0.0.1:* https://*.google.com https://*.run.app https://ai.studio https://*.google https://*.aistudio.google https://*.usercontent.google https://*.aistudio.google.com https://*.replit.dev https://*.replit.app https://*.repl.co https://*.pike.replit.dev;"
     );
     
     // Explicitly remove X-Frame-Options to allow framing across modern/legacy browsers alongside CSP
@@ -1011,9 +1011,15 @@ async function startServer() {
     return parts.join(', ');
   }
 
-  // Reverse geocode a lat/lng pair into a real human-readable address using the Google
-  // Maps Geocoding API. Always performs a live lookup — results are NEVER cached, per
-  // requirement, so the address reflects the true current geocoder response every time.
+  // In-memory geocode cache: key = "lat,lng" rounded to 4dp (~11 m precision)
+  const geocodeCache = new Map<string, { address: string; ts: number }>();
+  const GEOCODE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+  // Reverse geocode a lat/lng pair into a human-readable address.
+  // Uses Google Maps when GOOGLE_MAPS_API_KEY is set; falls back to
+  // OpenStreetMap Nominatim otherwise. Results are cached server-side for
+  // 1 hour so repeated requests for the same coordinate do not hit the
+  // external API more than once per session.
   app.get("/api/geocode", async (req, res) => {
     const { lat, lng } = req.query;
 
@@ -1021,25 +1027,60 @@ async function startServer() {
       return res.status(400).json({ error: "Missing lat/lng parameters" });
     }
 
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "GOOGLE_MAPS_API_KEY is not configured" });
+    const latNum = parseFloat(lat as string);
+    const lngNum = parseFloat(lng as string);
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      return res.status(400).json({ error: "Invalid lat/lng values" });
     }
 
-    try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${encodeURIComponent(lat as string)},${encodeURIComponent(lng as string)}&key=${apiKey}`;
-      const response = await fetch(url);
-      const data: any = await response.json();
+    // Round to 4 decimal places for cache key (~11 m resolution)
+    const cacheKey = `${latNum.toFixed(4)},${lngNum.toFixed(4)}`;
+    const cached = geocodeCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < GEOCODE_TTL_MS) {
+      return res.json({ address: cached.address, status: "OK", source: "cache" });
+    }
 
-      if (data.status === "OK" && data.results && data.results.length > 0) {
-        const detailedAddress = buildDetailedAddress(data.results);
-        res.json({ address: detailedAddress, status: "OK" });
-      } else {
-        res.json({ address: null, status: data.status || "UNKNOWN_ERROR", errorMessage: data.error_message });
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    try {
+      let address: string | null = null;
+
+      if (apiKey) {
+        // --- Google Maps path ---
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latNum},${lngNum}&key=${apiKey}`;
+        const response = await fetch(url);
+        const data: any = await response.json();
+        if (data.status === "OK" && data.results?.length > 0) {
+          address = buildDetailedAddress(data.results);
+        }
       }
+
+      if (!address) {
+        // --- OSM Nominatim fallback (no API key required) ---
+        const osmUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latNum}&lon=${lngNum}&zoom=16&addressdetails=1`;
+        const osmResp = await fetch(osmUrl, {
+          headers: { "User-Agent": "FalconTrackingApp/1.0" }
+        });
+        if (osmResp.ok) {
+          const osmData: any = await osmResp.json();
+          if (osmData?.display_name) {
+            // Shorten: keep the first 3 comma-separated parts (enough for locality)
+            const parts = (osmData.display_name as string).split(",").map((s: string) => s.trim());
+            address = parts.slice(0, 3).join(", ");
+          }
+        }
+      }
+
+      if (address) {
+        geocodeCache.set(cacheKey, { address, ts: Date.now() });
+        return res.json({ address, status: "OK" });
+      }
+
+      return res.json({ address: null, status: "ZERO_RESULTS" });
     } catch (err: any) {
       console.error("Geocode Error:", err.message);
-      res.status(500).json({ error: err.message });
+      // Return a graceful non-500 so the client doesn't spam retries
+      return res.status(200).json({ address: null, status: "ERROR", errorMessage: err.message });
     }
   });
 
