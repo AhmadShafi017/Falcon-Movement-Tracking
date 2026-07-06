@@ -328,9 +328,10 @@ export default function App() {
         } else {
           if (empLevel !== targetLevel) return false;
         }
-      } else if (!showSubordinates) {
+      } else if (!showSubordinates && currentPage === 'MOVEMENT') {
         // No roleFilter but subordinates hidden: restrict to the level that matches
         // the deepest selected hierarchy filter so only the "owner" of that level shows.
+        // This only applies on the Movement page — Current Location should show all levels.
         const empLevel = parseInt(String(e.EMP_LEVEL));
         let targetLevel: number | null = null;
         if (selTerr)                        targetLevel = 6; // MPO owns territory
