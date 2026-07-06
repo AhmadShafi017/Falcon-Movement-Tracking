@@ -218,7 +218,11 @@ export const ReportPage: React.FC<ReportPageProps> = ({
     setTargetDate(row.APPLY_DATE);
     // 2. Set Employee
     setSelectedEmpId(row.EMP_ID);
-    // 3. Set page mode
+    // 3. Sync hierarchy filters so filteredGlobalLocations narrows to only this
+    //    employee — identical to selecting them from the Movement Tracking search.
+    const emp = employees.find((e) => e.EMP_ID === row.EMP_ID);
+    if (emp) syncHierarchy(emp);
+    // 4. Set page mode
     setCurrentPage('MOVEMENT');
   };
 
