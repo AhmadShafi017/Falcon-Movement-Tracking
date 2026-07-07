@@ -190,6 +190,29 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
     });
   }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, roleFilter]);
 
+  // "Hierarchy Wise Active Employee" — total employees with STATUS='A' in EMPLOYEE_HIERARCHY
+  // that match the current hierarchy + role filters. Uses the `employees` prop (from /api/employees)
+  // which is the raw EMPLOYEE_HIERARCHY list — independent of tracking/attendance data.
+  const hierarchyActiveCount = useMemo(() => {
+    return employees.filter(e => {
+      const divMatch = !selDiv || (DIVISIONS_MAP[selDiv] ? DIVISIONS_MAP[selDiv](e) : true);
+      const nhMatch = !selNH || e.NH_NAME === selNH || e.NH_CODE === selNH;
+      const zoneMatch = !selZone || e.ZONE_NAME === selZone || e.ZONE_CODE === selZone;
+      const regionMatch = !selRegion || e.REGION_NAME === selRegion || e.REGION_CODE === selRegion;
+      const areaMatch = !selArea || e.AREA_NAME === selArea || e.AREA_CODE === selArea;
+      const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
+      const roleMatch = !roleFilter || String(e.EMP_LEVEL) === ROLE_LEVEL_MAP[roleFilter];
+      return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch && roleMatch;
+    }).length;
+  }, [employees, DIVISIONS_MAP, selDiv, selNH, selZone, selRegion, selArea, selTerr, roleFilter]);
+
+  // "No Location Data" — employees who are in EMPLOYEE_HIERARCHY (STATUS='A') but have
+  // no GPS coordinate available (neither today's attendance lat nor any USER_LOCATION record).
+  // These employees pass all hierarchy filters but have null GEO_LAT → no marker on the map.
+  const noLocationCount = useMemo(() => {
+    return hierarchyFilteredLocations.filter(e => !e.GEO_LAT).length;
+  }, [hierarchyFilteredLocations]);
+
   return (
     <aside className="w-96 h-full border-r border-slate-100 flex flex-col bg-white shrink-0 z-10 shadow-sm overflow-hidden">
 
@@ -356,6 +379,32 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                 </p>
               </div>
             </button>
+
+            {/* ── NEW: Hierarchy Wise Active Employee ── */}
+            {/* Total STATUS='A' employees in EMPLOYEE_HIERARCHY matching current filters.
+                This is the ground-truth headcount — independent of tracking/attendance data. */}
+            <div className="p-4 border rounded-2xl bg-blue-50/60 border-blue-100 text-left col-span-1">
+              <p className="text-[9px] font-extrabold uppercase tracking-widest mb-1 text-blue-600 leading-tight">
+                Hierarchy Active
+              </p>
+              <p className="text-2xl font-black tracking-tight tabular-nums text-blue-700">
+                {hierarchyActiveCount}
+              </p>
+            </div>
+
+            {/* ── NEW: No Location Data Available ── */}
+            {/* Employees who are in EMPLOYEE_HIERARCHY (STATUS='A') and match the current
+                filters but have NO GPS coordinate (null GEO_LAT) — they are invisible on
+                the map even though they exist in the system. */}
+            <div className="p-4 border rounded-2xl bg-slate-100/80 border-slate-200 text-left col-span-1">
+              <p className="text-[9px] font-extrabold uppercase tracking-widest mb-1 text-slate-500 leading-tight">
+                No Location
+              </p>
+              <p className="text-2xl font-black tracking-tight tabular-nums text-slate-600">
+                {noLocationCount}
+              </p>
+            </div>
+
           </div>
         )}
       </div>
