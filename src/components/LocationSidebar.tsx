@@ -190,25 +190,10 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
     });
   }, [allLatestLocations, selDiv, selNH, selZone, selRegion, selArea, selTerr, roleFilter]);
 
-  // "Hierarchy Wise Active Employee" — total employees with STATUS='A' in EMPLOYEE_HIERARCHY
-  // that match the current hierarchy + role filters. Uses the `employees` prop (from /api/employees)
-  // which is the raw EMPLOYEE_HIERARCHY list — independent of tracking/attendance data.
-  const hierarchyActiveCount = useMemo(() => {
-    return employees.filter(e => {
-      const divMatch = !selDiv || (DIVISIONS_MAP[selDiv] ? DIVISIONS_MAP[selDiv](e) : true);
-      const nhMatch = !selNH || e.NH_NAME === selNH || e.NH_CODE === selNH;
-      const zoneMatch = !selZone || e.ZONE_NAME === selZone || e.ZONE_CODE === selZone;
-      const regionMatch = !selRegion || e.REGION_NAME === selRegion || e.REGION_CODE === selRegion;
-      const areaMatch = !selArea || e.AREA_NAME === selArea || e.AREA_CODE === selArea;
-      const terrMatch = !selTerr || e.TERR_NAME === selTerr || e.TERR_CODE === selTerr;
-      const roleMatch = !roleFilter || String(e.EMP_LEVEL) === ROLE_LEVEL_MAP[roleFilter];
-      return divMatch && nhMatch && zoneMatch && regionMatch && areaMatch && terrMatch && roleMatch;
-    }).length;
-  }, [employees, DIVISIONS_MAP, selDiv, selNH, selZone, selRegion, selArea, selTerr, roleFilter]);
-
-  // "No Location Data" — employees who are in EMPLOYEE_HIERARCHY (STATUS='A') but have
-  // no GPS coordinate available (neither today's attendance lat nor any USER_LOCATION record).
-  // These employees pass all hierarchy filters but have null GEO_LAT → no marker on the map.
+  // "No Location Data" — employees who are in EMPLOYEE_HIERARCHY (STATUS='A') and match
+  // the current filters but have NO GPS coordinate at all (null GEO_LAT).
+  // These are invisible on the map. They must NOT be counted in Active/Hibernate/Leave
+  // so that: Active + Hibernate + Leave + No Location = Total exactly.
   const noLocationCount = useMemo(() => {
     return hierarchyFilteredLocations.filter(e => !e.GEO_LAT).length;
   }, [hierarchyFilteredLocations]);
@@ -264,7 +249,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
               <p className={`text-2xl font-black tracking-tight tabular-nums ${
                 statusFilter === 'active' ? 'text-white' : 'text-emerald-700'
               }`}>
-                {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'active').length}
+                {hierarchyFilteredLocations.filter(gl => !!gl.GEO_LAT && getEmployeeStatus(gl) === 'active').length}
               </p>
             </button>
 
@@ -282,7 +267,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
               <p className={`text-2xl font-black tracking-tight tabular-nums ${
                 statusFilter === 'hibernate' ? 'text-white' : 'text-amber-700'
               }`}>
-                {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'hibernate').length}
+                {hierarchyFilteredLocations.filter(gl => !!gl.GEO_LAT && getEmployeeStatus(gl) === 'hibernate').length}
               </p>
             </button>
 
@@ -304,7 +289,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                   <p className={`text-2xl font-black tracking-tight tabular-nums transition-colors duration-300 ${
                     ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-rose-700'
                   }`}>
-                    {hierarchyFilteredLocations.filter(gl => ['leave', 'unauthorized_leave'].includes(getEmployeeStatus(gl))).length}
+                    {hierarchyFilteredLocations.filter(gl => !!gl.GEO_LAT && ['leave', 'unauthorized_leave'].includes(getEmployeeStatus(gl))).length}
                   </p>
                 </div>
               ) : (
@@ -329,7 +314,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                     <span className={`text-lg font-black tracking-tight mt-1 leading-none transition-colors duration-300 ${
                       statusFilter === 'authorized_leave' ? 'text-rose-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-rose-700'
                     }`}>
-                      {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'leave').length}
+                      {hierarchyFilteredLocations.filter(gl => !!gl.GEO_LAT && getEmployeeStatus(gl) === 'leave').length}
                     </span>
                   </button>
 
@@ -353,7 +338,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
                     <span className={`text-lg font-black tracking-tight mt-1 leading-none transition-colors duration-300 ${
                       statusFilter === 'unauthorized_leave' ? 'text-pink-700' : ['leave', 'authorized_leave', 'unauthorized_leave'].includes(statusFilter) ? 'text-white' : 'text-pink-700'
                     }`}>
-                      {hierarchyFilteredLocations.filter(gl => getEmployeeStatus(gl) === 'unauthorized_leave').length}
+                      {hierarchyFilteredLocations.filter(gl => !!gl.GEO_LAT && getEmployeeStatus(gl) === 'unauthorized_leave').length}
                     </span>
                   </button>
                 </div>
@@ -380,19 +365,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
               </div>
             </button>
 
-            {/* ── NEW: Hierarchy Wise Active Employee ── */}
-            {/* Total STATUS='A' employees in EMPLOYEE_HIERARCHY matching current filters.
-                This is the ground-truth headcount — independent of tracking/attendance data. */}
-            <div className="p-4 border rounded-2xl bg-blue-50/60 border-blue-100 text-left col-span-1">
-              <p className="text-[9px] font-extrabold uppercase tracking-widest mb-1 text-blue-600 leading-tight">
-                Hierarchy Active
-              </p>
-              <p className="text-2xl font-black tracking-tight tabular-nums text-blue-700">
-                {hierarchyActiveCount}
-              </p>
-            </div>
-
-            {/* ── NEW: No Location Data Available ── */}
+            {/* ── No Location Data Available ── */}
             {/* Employees who are in EMPLOYEE_HIERARCHY (STATUS='A') and match the current
                 filters but have NO GPS coordinate (null GEO_LAT) — they are invisible on
                 the map even though they exist in the system. */}
