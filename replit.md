@@ -14,6 +14,11 @@ An enterprise field-force tracking dashboard built with React, TypeScript, and E
 ### On Replit
 The workflow `Start application` runs `npm run dev` and serves on port 5000. Oracle DB credentials are stored as Replit Secrets — no `.env` file needed.
 
+Required secrets (set via Replit Secrets):
+- `ORACLE_USER`
+- `ORACLE_PASSWORD`
+- `ORACLE_CONNECTION_STRING`
+
 ### Locally
 ```bash
 # 1. Install dependencies
@@ -69,6 +74,13 @@ Authenticate with header `X-Security-Code` or query param `?securityCode=`.
 ## Architecture note
 
 `server.ts` is a single file that boots Express API routes AND Vite middleware on one port — do not split into separate frontend/backend workflows.
+
+## Replit setup notes
+
+- Verified: Oracle DB connection pool initialises on startup (`[DB] initializing pool for <user>...` in workflow logs)
+- Verified: `/api/employees` returns live Oracle data (HTTP 200 with real employee records)
+- The workflow `Start application` (`npm run dev` → `tsx server.ts`) opens port 5000 as the web preview
+- Port 24678 is the Vite HMR websocket — this is expected and does not need a separate workflow
 
 ## User preferences
 
