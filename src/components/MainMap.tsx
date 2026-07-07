@@ -377,11 +377,9 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
               <div className="p-2 min-w-[200px]">
                 <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-2">{actTitle}</p>
                 <p className="text-[10px] font-bold text-slate-600 leading-relaxed">{actAddress}</p>
-                {isStart && (
-                  <p className="text-[10px] font-bold text-blue-600 mt-1.5">
-                    {toBDDateOnlyString(activePoint.time)} &nbsp;·&nbsp; {toBDTimeString(activePoint.time)}
-                  </p>
-                )}
+                <p className="text-[10px] font-bold text-blue-600 mt-1.5">
+                  {toBDDateOnlyString(activePoint.time)} &nbsp;·&nbsp; {toBDTimeString(activePoint.time)}
+                </p>
               </div>
             </Popup>
           </Marker>
@@ -422,11 +420,9 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
               <div className="p-2 min-w-[200px]">
                 <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-2">{title}</p>
                 <p className="text-[10px] font-bold text-slate-600 leading-relaxed">{address}</p>
-                {isStartOfDay && (
-                  <p className="text-[10px] font-bold text-blue-600 mt-1.5">
-                    {toBDDateOnlyString(p.time)} &nbsp;·&nbsp; {toBDTimeString(p.time)}
-                  </p>
-                )}
+                <p className="text-[10px] font-bold text-blue-600 mt-1.5">
+                  {toBDDateOnlyString(p.time)} &nbsp;·&nbsp; {toBDTimeString(p.time)}
+                </p>
               </div>
             </Popup>
           </Marker>
