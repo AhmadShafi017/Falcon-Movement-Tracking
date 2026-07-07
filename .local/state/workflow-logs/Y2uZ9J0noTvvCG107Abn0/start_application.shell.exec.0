@@ -1,0 +1,495 @@
+
+> react-example@0.0.0 dev
+> tsx server.ts
+
+[1G[0KServer running on http://localhost:5000
+[2m5:41:21 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [optimizer] bundling dependencies...
+[DB] initializing pool for ZSKWEB...
+[2m5:41:32 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx:172:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:8924:125)
+[2m5:41:33 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx:179:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:8924:125)
+[2m5:41:33 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx:172:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7606:5)
+[2m5:41:33 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx:179:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=c3171aaa:7606:5)
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:56:45 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ReportPage.tsx, /src/index.css[22m
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-02 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-01 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-01 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-01 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:11:59 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:00 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/MovementPage.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:01 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/MainMap.tsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:19 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:21 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:27 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m [33m(x3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:29 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/MainMap.tsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:12:32 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/MainMap.tsx[22m [33m(x2)[39m
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Bounded POI SQL: Lat(23.983163735337715-24.037168436235962), Lng(89.20143127441408-89.30854797363281), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.961881252835454-24.069885841448126), Lng(89.14443969726564-89.35867309570312), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.954038053396907-24.062049225724017), Lng(89.13102732534095-89.34526072377845), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.954978924066758-24.062989306717796), Lng(89.15182113647462-89.36605453491212), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.91020933029055-24.12621450306627), Lng(89.04384613037111-89.47231292724611), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.948389992871448-24.056405905024263), Lng(89.14649963378908-89.36073303222656), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.902362602950575-24.11838094475388), Lng(89.04041290283205-89.46887969970705), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.900793200324234-24.116814175544008), Lng(89.04487609863283-89.47334289550783), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.985124232746564-24.039128110661128), Lng(89.20074462890626-89.307861328125), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.981909001333847-24.035914228915065), Lng(89.205379486084-89.31249618530275), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.959528227720668-24.067534791714724), Lng(89.14718627929689-89.36141967773438), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.910523189475683-24.126527835422863), Lng(89.03526306152345-89.46372985839844), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.95372391550434-24.061735351482042), Lng(89.11113739013672-89.32537078857423), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.909267748161664-24.125274501391853), Lng(89.00608062744142-89.43454742431642), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.900793200324234-24.116814175544008), Lng(89.04487609863283-89.47334289550783), Filters: GENERAL
+Executing Bounded POI SQL: Lat(24.005322606696335-24.012073271596115), Lng(89.25074100494385-89.26413059234619), Filters: GENERAL
+Executing Bounded POI SQL: Lat(24.00553822574423-24.012288879328814), Lng(89.25226449966432-89.26565408706666), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.98896672108953-24.042968985809136), Lng(89.19851303100586-89.30562973022462), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.997019241254407-24.024021518054173), Lng(89.23323154449464-89.28678989410402), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.984967394052145-24.03897133780728), Lng(89.20709609985353-89.31421279907228), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.981909001333847-24.035914228915065), Lng(89.205379486084-89.31249618530275), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.99241702107071-24.046417837041272), Lng(89.21052932739259-89.31764602661133), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.93876739377408-24.154724603926795), Lng(89.06341552734376-89.49188232421876), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.96141065124813-24.069415634948726), Lng(89.15199279785156-89.36622619628908), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.954978924066758-24.062989306717796), Lng(89.15182113647462-89.36605453491212), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.91013357793766-23.964168890635115), Lng(90.10402679443361-90.21114349365236), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.904170108139176-23.958207916649812), Lng(90.10565757751466-90.2127742767334), Filters: GENERAL
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-05 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:54:07 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ReportPage.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:54:16 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ReportPage.tsx, /src/index.css[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:54:18 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:54:22 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:54:50 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m [33m(x3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:54:53 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m [33m(x4)[39m
+Executing Report SQL Query from: 2026-07-06 to 2026-07-06
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
