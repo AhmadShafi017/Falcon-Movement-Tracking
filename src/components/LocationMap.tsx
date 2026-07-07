@@ -31,10 +31,18 @@ const storeIcon = new L.DivIcon({
   iconAnchor: [20, 48],
 });
 
-const createPinIcon = (color: string, isSelected: boolean = false) => {
+// ── Module-level icon cache ──────────────────────────────────────────────────
+// Prevents creating a new L.DivIcon for every marker on every render.
+const locationPinCache = new Map<string, L.DivIcon>();
+
+const createPinIcon = (color: string, isSelected: boolean = false): L.DivIcon => {
+  const cacheKey = `${color}-${isSelected}`;
+  const cached = locationPinCache.get(cacheKey);
+  if (cached) return cached;
+
   const size = isSelected ? 48 : 40;
   const innerSize = isSelected ? 12 : 10;
-  return new L.DivIcon({
+  const icon = new L.DivIcon({
     className: 'location-pin',
     html: `
       <div class="relative flex flex-col items-center transition-all duration-300" style="transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'}; z-index: ${isSelected ? 1000 : 1}">
@@ -50,7 +58,11 @@ const createPinIcon = (color: string, isSelected: boolean = false) => {
     iconAnchor: [size / 2, size + 12],
     popupAnchor: [0, -size - 5]
   });
+
+  locationPinCache.set(cacheKey, icon);
+  return icon;
 };
+// ─────────────────────────────────────────────────────────────────────────────
 
 function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
   const map = useMap();
@@ -62,32 +74,45 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
   return null;
 }
 
+// ── Debounced FitBounds ──────────────────────────────────────────────────────
+// Waits 500ms after the last markers change before flying the map.
+// Prevents repeated 1.5s animations when filters change rapidly.
 function FitBounds({ markers }: { markers: any[] }) {
   const map = useMap();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (markers.length === 0) return;
-    
-    const validMarkers = markers.filter(m => {
-      const lat = m.GEO_LAT || m.IN_LAT;
-      const lng = m.GEO_LONG || m.IN_LONG;
-      return lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-    });
 
-    if (validMarkers.length === 0) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const validMarkers = markers.filter(m => {
+        const lat = m.GEO_LAT || m.IN_LAT;
+        const lng = m.GEO_LONG || m.IN_LONG;
+        return lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+      });
 
-    const bounds = L.latLngBounds(validMarkers.map(m => [
-      parseFloat(m.GEO_LAT || m.IN_LAT),
-      parseFloat(m.GEO_LONG || m.IN_LONG)
-    ]));
+      if (validMarkers.length === 0) return;
 
-    map.flyToBounds(bounds, { 
-      padding: [50, 50], 
-      maxZoom: 12,
-      duration: 1.5
-    });
+      const bounds = L.latLngBounds(validMarkers.map(m => [
+        parseFloat(m.GEO_LAT || m.IN_LAT),
+        parseFloat(m.GEO_LONG || m.IN_LONG)
+      ]));
+
+      map.flyToBounds(bounds, { 
+        padding: [50, 50], 
+        maxZoom: 12,
+        duration: 1.0
+      });
+    }, 500);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [markers, map]);
   return null;
 }
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface LocationMapProps {
   center: { lat: number; lng: number };
@@ -140,7 +165,7 @@ export const LocationMap: React.FC<LocationMapProps> = memo(({
       />
       <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">mTracking V-2.0</a>' />
 
-      {filteredGlobalLocations.map((gl, idx) => {
+      {filteredGlobalLocations.map((gl) => {
         const status = getEmployeeStatus(gl);
         const latStr = gl.GEO_LAT || gl.IN_LAT;
         const lngStr = gl.GEO_LONG || gl.IN_LONG;
@@ -157,11 +182,12 @@ export const LocationMap: React.FC<LocationMapProps> = memo(({
           status === 'hibernate' ? '#f59e0b' : 
           '#EF4444';
         
+        // Use cached icon — no new object allocated on re-render
         const iconToUse = createPinIcon(iconColor, isSelected);
 
         return (
           <Marker 
-            key={`loc-marker-${gl.EMP_ID}-${idx}`} 
+            key={`loc-marker-${gl.EMP_ID}`}
             position={[lat, lng]} 
             icon={iconToUse} 
             zIndexOffset={isSelected ? 1000 : 0}

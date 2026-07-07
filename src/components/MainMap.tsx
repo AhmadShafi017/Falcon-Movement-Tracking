@@ -69,10 +69,19 @@ const storeIcon = new L.DivIcon({
   popupAnchor: [0, -48]
 });
 
-const createPinIcon = (color: string, isSelected: boolean = false) => {
+// ── Module-level icon cache ──────────────────────────────────────────────────
+// Prevents creating a new L.DivIcon for every marker on every render.
+// Key: "${color}-${isSelected}" → reuse the same object across renders.
+const pinIconCache = new Map<string, L.DivIcon>();
+
+const createPinIcon = (color: string, isSelected: boolean = false): L.DivIcon => {
+  const cacheKey = `${color}-${isSelected}`;
+  const cached = pinIconCache.get(cacheKey);
+  if (cached) return cached;
+
   const size = isSelected ? 40 : 32;
   const innerSize = isSelected ? 12 : 10;
-  return new L.DivIcon({
+  const icon = new L.DivIcon({
     className: 'custom-pin',
     html: `
       <div class="relative flex flex-col items-center transition-all duration-300" style="transform: ${isSelected ? 'scale(1.2)' : 'scale(1)'}; z-index: ${isSelected ? 1000 : 1}">
@@ -88,7 +97,11 @@ const createPinIcon = (color: string, isSelected: boolean = false) => {
     iconAnchor: [size / 2, size + 10],
     popupAnchor: [0, -size - 2]
   });
+
+  pinIconCache.set(cacheKey, icon);
+  return icon;
 };
+// ─────────────────────────────────────────────────────────────────────────────
 
 const MapDecorations: React.FC<{ path: [number, number][] }> = ({ path }) => {
   const map = useMap();
@@ -228,7 +241,7 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
       />
       <AttributionControl prefix='<a href="#" target="_blank" rel="noreferrer">mTracking V-2.0</a>' />
 
-      {filteredGlobalLocations.map((gl, idx) => {
+      {filteredGlobalLocations.map((gl) => {
         const status = getEmployeeStatus(gl);
         const latStr = gl.GEO_LAT || gl.IN_LAT;
         const lngStr = gl.GEO_LONG || gl.IN_LONG;
@@ -252,11 +265,12 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
           )
         );
 
+        // Use cached icon — no new object allocated on re-render
         const iconToUse = createPinIcon(iconColor, isSelected);
 
         return (
           <Marker 
-            key={`global-${gl.EMP_ID}-${idx}`} 
+            key={`global-${gl.EMP_ID}`}
             position={[lat, lng]} 
             icon={iconToUse} 
             zIndexOffset={isSelected ? 1000 : 0}

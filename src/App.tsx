@@ -180,6 +180,12 @@ export default function App() {
 
   const [mapStyle, setMapStyle] = useState<'hybrid' | 'roadmap'>('hybrid');
   const [addressCache, setAddressCache] = useState<Record<string, string>>({});
+  // Refs for batching geocode results — prevents N individual setAddressCache
+  // calls (one per history point) from triggering N cascading re-renders.
+  const addressCacheRef = React.useRef<Record<string, string>>({});
+  const geocodePendingRef = React.useRef<Set<string>>(new Set());
+  const geocodeBatchRef = React.useRef<Record<string, string>>({});
+  const geocodeFlushTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const [allLatestLocations, setAllLatestLocations] = useState<any[]>([]);
   const [pois, setPois] = useState<any[]>([]);
 
@@ -268,23 +274,43 @@ export default function App() {
     }
   }, [selNH, selZone, selRegion, selArea, selTerr, employees, selectedEmpId]);
 
+  // Keep addressCacheRef in sync so geocodePoint can check it without stale closure
+  React.useEffect(() => {
+    addressCacheRef.current = addressCache;
+  }, [addressCache]);
+
+  // Flush all batched geocode results in a single setState call.
+  // This replaces up to N individual setAddressCache calls with one.
+  const flushGeocodeBatch = React.useCallback(() => {
+    const batch = { ...geocodeBatchRef.current };
+    geocodeBatchRef.current = {};
+    if (Object.keys(batch).length === 0) return;
+    setAddressCache(prev => ({ ...prev, ...batch }));
+  }, []);
+
   // Geocode a single coordinate via the server-side Google Maps proxy.
-  const geocodePoint = (lat: number, lng: number) => {
+  // Results are batched: all resolutions within 300ms share one setState call.
+  const geocodePoint = React.useCallback((lat: number, lng: number) => {
     const key = `${lat}-${lng}`;
-    setAddressCache(prev => {
-      if (prev[key]) return prev; // already cached
-      fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
-        .then(res => res.json())
-        .then(data => {
-          // Always set a result so the UI never stays stuck on "Resolving..."
-          setAddressCache(p => ({ ...p, [key]: data.address || 'Unknown Location' }));
-        })
-        .catch(() => {
-          setAddressCache(p => ({ ...p, [key]: 'Unknown Location' }));
-        });
-      return prev;
-    });
-  };
+    // Skip if already in cache or already fetching
+    if (addressCacheRef.current[key] || geocodePendingRef.current.has(key)) return;
+    geocodePendingRef.current.add(key);
+
+    fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
+      .then(res => res.json())
+      .then(data => {
+        geocodePendingRef.current.delete(key);
+        geocodeBatchRef.current[key] = data.address || 'Unknown Location';
+        if (geocodeFlushTimerRef.current) clearTimeout(geocodeFlushTimerRef.current);
+        geocodeFlushTimerRef.current = setTimeout(flushGeocodeBatch, 300);
+      })
+      .catch(() => {
+        geocodePendingRef.current.delete(key);
+        geocodeBatchRef.current[key] = 'Unknown Location';
+        if (geocodeFlushTimerRef.current) clearTimeout(geocodeFlushTimerRef.current);
+        geocodeFlushTimerRef.current = setTimeout(flushGeocodeBatch, 300);
+      });
+  }, [flushGeocodeBatch]);
 
   // When a new location loads, geocode every point in its history so the
   // movement ledger and map markers always show real addresses, not coordinates.

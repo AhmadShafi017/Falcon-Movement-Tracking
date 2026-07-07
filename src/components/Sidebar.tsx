@@ -1,7 +1,6 @@
 
-import React, { memo, useMemo, useState } from 'react';
-import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import React, { memo, useMemo, useState, useEffect, useCallback } from 'react';
+import { Search, Users, RotateCcw, ChevronRight, Briefcase, Globe, Map as MapIcon, History, Navigation2, MapPin, AlertCircle, Loader2, X } from 'lucide-react';
 import { Employee, LocationData, MovementPoint } from '../types';
 import { getDesignation, getTeam, toBDTimeString, getEmployeeStatus } from '../utils/formatters';
 
@@ -82,6 +81,52 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
     'SR': (e) => String(e.EMP_LEVEL) === '7',
   }), []);
 
+  // ── Local search state ───────────────────────────────────────────────────
+  // The input is fully local so typing never triggers App.tsx re-renders.
+  // When the parent resets (searchQuery → ''), we sync local state to clear.
+  const [localSearch, setLocalSearch] = useState('');
+  useEffect(() => {
+    if (searchQuery === '') setLocalSearch('');
+  }, [searchQuery]);
+
+  const searchResults = useMemo(() => {
+    if (!localSearch) return [];
+    const q = localSearch.toLowerCase();
+    return employees
+      .filter(e =>
+        e.EMP_NAME.toLowerCase().includes(q) ||
+        e.EMP_ID.toLowerCase().includes(q) ||
+        e.TERR_NAME?.toLowerCase().includes(q) ||
+        e.TERR_CODE?.toLowerCase().includes(q) ||
+        e.AREA_NAME?.toLowerCase().includes(q) ||
+        e.AREA_CODE?.toLowerCase().includes(q) ||
+        e.REGION_NAME?.toLowerCase().includes(q) ||
+        e.REGION_CODE?.toLowerCase().includes(q) ||
+        e.ZONE_NAME?.toLowerCase().includes(q) ||
+        e.ZONE_CODE?.toLowerCase().includes(q) ||
+        e.NH_NAME?.toLowerCase().includes(q) ||
+        e.NH_CODE?.toLowerCase().includes(q)
+      )
+      .slice(0, 15);
+  }, [localSearch, employees]);
+
+  const handleSearchSelect = useCallback((emp: Employee) => {
+    setSelectedEmpId(emp.EMP_ID);
+    setSelNH(emp.NH_NAME || '');
+    setSelZone(emp.ZONE_NAME || '');
+    setSelRegion(emp.REGION_NAME || '');
+    setSelArea(emp.AREA_NAME || '');
+    setSelTerr(emp.TERR_NAME || '');
+    setLocalSearch('');
+    setSearchQuery('');
+  }, [setSelectedEmpId, setSelNH, setSelZone, setSelRegion, setSelArea, setSelTerr, setSearchQuery]);
+
+  const handleClearSearch = useCallback(() => {
+    setLocalSearch('');
+    setSearchQuery('');
+  }, [setSearchQuery]);
+  // ─────────────────────────────────────────────────────────────────────────
+
   const hierarchyOptions = useMemo(() => {
     const getUniquePairs = (list: Employee[], codeKey: keyof Employee, nameKey: keyof Employee) => {
       const map = new Map<string, string>();
@@ -142,58 +187,41 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
 
         {showDeploymentHierarchy && (
         <>
+        {/* ── Search field: local state only, never touches App.tsx on keystroke ── */}
         <div className="relative group">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={14} className="text-slate-400" />
           </div>
           <input 
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             placeholder="Search Employee ID or Name..."
-            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all shadow-sm"
+            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-9 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-300 transition-all shadow-sm"
           />
-          {searchQuery && (
+          {localSearch && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-xl shadow-2xl z-[60] max-h-60 overflow-y-auto custom-scrollbar">
-              {employees
-                .filter(e => {
-                  const q = searchQuery.toLowerCase();
-                  return (
-                    e.EMP_NAME.toLowerCase().includes(q) || 
-                    e.EMP_ID.toLowerCase().includes(q) ||
-                    e.TERR_NAME?.toLowerCase().includes(q) ||
-                    e.TERR_CODE?.toLowerCase().includes(q) ||
-                    e.AREA_NAME?.toLowerCase().includes(q) ||
-                    e.AREA_CODE?.toLowerCase().includes(q) ||
-                    e.REGION_NAME?.toLowerCase().includes(q) ||
-                    e.REGION_CODE?.toLowerCase().includes(q) ||
-                    e.ZONE_NAME?.toLowerCase().includes(q) ||
-                    e.ZONE_CODE?.toLowerCase().includes(q) ||
-                    e.NH_NAME?.toLowerCase().includes(q) ||
-                    e.NH_CODE?.toLowerCase().includes(q)
-                  );
-                })
-                .slice(0, 15)
-                .map(emp => (
-                  <button
-                    key={emp.EMP_ID}
-                    onClick={() => {
-                      setSelectedEmpId(emp.EMP_ID);
-                      setSelNH(emp.NH_NAME || '');
-                      setSelZone(emp.ZONE_NAME || '');
-                      setSelRegion(emp.REGION_NAME || '');
-                      setSelArea(emp.AREA_NAME || '');
-                      setSelTerr(emp.TERR_NAME || '');
-                      setSearchQuery('');
-                    }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 transition-colors"
-                  >
-                    <p className="text-[11px] font-bold text-slate-700">{emp.EMP_NAME}</p>
-                    <p className="text-[9px] text-slate-400 font-mono">
-                      {emp.EMP_ID} • {emp.TERR_NAME ? `${emp.TERR_CODE} - ${emp.TERR_NAME}` : emp.AREA_NAME ? `${emp.AREA_CODE} - ${emp.AREA_NAME}` : 'HQ'}
-                    </p>
-                  </button>
-                ))}
+              {searchResults.map(emp => (
+                <button
+                  key={emp.EMP_ID}
+                  onClick={() => handleSearchSelect(emp)}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 transition-colors"
+                >
+                  <p className="text-[11px] font-bold text-slate-700">{emp.EMP_NAME}</p>
+                  <p className="text-[9px] text-slate-400 font-mono">
+                    {emp.EMP_ID} • {emp.TERR_NAME ? `${emp.TERR_CODE} - ${emp.TERR_NAME}` : emp.AREA_NAME ? `${emp.AREA_CODE} - ${emp.AREA_NAME}` : 'HQ'}
+                  </p>
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -255,8 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
               onChange={(e) => {
                 setRoleFilter(e.target.value);
                 if (e.target.value) {
-                  // Show a searchable dropdown for the selected role
-                  // Clear the searchQuery when changing roles
+                  setLocalSearch('');
                   setSearchQuery('');
                 }
               }}
@@ -481,11 +508,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                     {location.history?.map((point, idx) => {
                       const isActive = activePoint === point;
                       return (
-                        <motion.button
+                        // ── Plain button with CSS transition instead of motion.button ──
+                        // motion.button registers event listeners per-instance which is
+                        // expensive at scale. CSS transition achieves the same visual effect.
+                        <button
                           key={`sidebar-pt-${idx}-${point.time}`}
-                          whileHover={{ x: 4 }}
                           onClick={() => handlePointSelect(point)}
-                          className={`w-full text-left p-5 rounded-2xl transition-all border group relative overflow-hidden ${
+                          className={`w-full text-left p-5 rounded-2xl transition-all border group relative overflow-hidden hover:translate-x-1 ${
                             isActive ? 'bg-blue-50 border-blue-200 shadow-sm' : 'hover:bg-slate-50 border-transparent'
                           }`}
                         >
@@ -507,7 +536,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({
                                 </p>
                             </div>
                           </div>
-                        </motion.button>
+                        </button>
                       );
                     })}
                   </div>
