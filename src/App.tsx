@@ -279,6 +279,16 @@ export default function App() {
     addressCacheRef.current = addressCache;
   }, [addressCache]);
 
+  // Clean up the geocode flush timer on unmount to prevent post-unmount setState
+  React.useEffect(() => {
+    return () => {
+      if (geocodeFlushTimerRef.current) {
+        clearTimeout(geocodeFlushTimerRef.current);
+        geocodeFlushTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // Flush all batched geocode results in a single setState call.
   // This replaces up to N individual setAddressCache calls with one.
   const flushGeocodeBatch = React.useCallback(() => {
@@ -292,8 +302,9 @@ export default function App() {
   // Results are batched: all resolutions within 300ms share one setState call.
   const geocodePoint = React.useCallback((lat: number, lng: number) => {
     const key = `${lat}-${lng}`;
-    // Skip if already in cache or already fetching
-    if (addressCacheRef.current[key] || geocodePendingRef.current.has(key)) return;
+    // Skip if already committed to cache, currently fetching, or already batched
+    // (the last check prevents duplicate fetches within the 300ms flush window)
+    if (addressCacheRef.current[key] || geocodePendingRef.current.has(key) || geocodeBatchRef.current[key]) return;
     geocodePendingRef.current.add(key);
 
     fetch(`/api/geocode?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
