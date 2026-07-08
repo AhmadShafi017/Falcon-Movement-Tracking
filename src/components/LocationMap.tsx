@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin } from 'lucide-react';
 import { POI } from '../types';
-import { toBDTimeString, toBDDateOnlyString, getTimeElapsed, getEmployeeStatus } from '../utils/formatters';
+import { toBDTimeString, toBDDateOnlyString, getTimeElapsed, getEmployeeStatus, getDesignationShort } from '../utils/formatters';
 
 const hospitalIcon = new L.DivIcon({
   className: 'location-marker',
@@ -202,6 +202,7 @@ export const LocationMap: React.FC<LocationMapProps> = memo(({
               <div className="p-1.5 min-w-[180px]">
                 <p className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-tight mb-0.5">{gl.EMP_NAME}</p>
                 <p className="text-[8px] font-bold text-slate-400 font-mono">ID: {gl.EMP_ID}</p>
+                <p className="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">{getDesignationShort(gl.EMP_LEVEL)}</p>
                 <div className="flex gap-2 mt-1.5 pt-1.5 border-t border-slate-100">
                   <span className="text-[7px] font-bold text-slate-500 uppercase">T: {gl.TERR_CODE || 'N/A'}</span>
                   <span className="text-[7px] font-bold text-slate-500 uppercase">A: {gl.AREA_CODE || 'N/A'}</span>

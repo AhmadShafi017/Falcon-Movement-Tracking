@@ -11,6 +11,18 @@ export const getDesignation = (level: string) => {
   return levels[level] || `Level ${level}`;
 };
 
+export const getDesignationShort = (level: string) => {
+  const shorts: Record<string, string> = {
+    '6': 'MPO',
+    '5': 'AM',
+    '4': 'RM',
+    '3': 'ZH',
+    '2': 'NSM',
+    '7': 'SR'
+  };
+  return shorts[level] || `L${level}`;
+};
+
 export const getTeam = (div: string) => {
   const divs: Record<string, string> = {
     '10': 'General',
