@@ -120,6 +120,19 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
 
   const handleSearchSelect = useCallback((emp: Employee) => {
     setSelectedEmpId(emp.EMP_ID);
+    // Resolve division from DIV_CODE + EMP_LEVEL (same logic as syncHierarchy in App.tsx)
+    const dCode = String(emp.DIV_CODE || '');
+    const eLevel = String(emp.EMP_LEVEL || '');
+    let divId = '';
+    if (dCode === '10') {
+      if (eLevel === '12') divId = 'SERVAY';
+      else if (eLevel === '7') divId = 'SR';
+      else divId = 'GENERAL';
+    } else if (dCode === '20') divId = 'ASPIRE';
+    else if (dCode === '60') divId = 'WOMENS_CARE';
+    else if (dCode === '30') divId = 'ONCOLOGY';
+    else if (dCode === '50') divId = 'DERMA';
+    setSelDiv(divId);
     setSelNH(emp.NH_NAME || '');
     setSelZone(emp.ZONE_NAME || '');
     setSelRegion(emp.REGION_NAME || '');
@@ -127,7 +140,7 @@ export const LocationSidebar: React.FC<LocationSidebarProps> = memo(({
     setSelTerr(emp.TERR_NAME || '');
     setLocalSearch('');
     setSearchQuery('');
-  }, [setSelectedEmpId, setSelNH, setSelZone, setSelRegion, setSelArea, setSelTerr, setSearchQuery]);
+  }, [setSelectedEmpId, setSelDiv, setSelNH, setSelZone, setSelRegion, setSelArea, setSelTerr, setSearchQuery]);
 
   const handleClearSearch = useCallback(() => {
     setLocalSearch('');

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Calendar, Search, Trash2, Download, ExternalLink, MapPin, ChevronLeft, ChevronRight, Check, BarChart2, Filter, Activity, Users, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -97,6 +97,30 @@ export const ReportPage: React.FC<ReportPageProps> = ({
   const [rosterPageNum, setRosterPageNum] = useState<number>(1);
   const rosterItemsPerPage = 10;
   const [selectedRosterEmpId, setSelectedRosterEmpId] = useState<string | null>(null);
+
+  // When a roster employee is clicked, sync hierarchy dropdowns to their data
+  const handleRosterSelect = useCallback((rosterEmp: { EMP_ID: string; EMP_LEVEL: string; DIV_CODE: string }) => {
+    setSelectedRosterEmpId(rosterEmp.EMP_ID);
+    const fullEmp = employees.find(e => e.EMP_ID === rosterEmp.EMP_ID);
+    if (!fullEmp) return;
+    const dCode = String(fullEmp.DIV_CODE || rosterEmp.DIV_CODE);
+    const eLevel = String(fullEmp.EMP_LEVEL || rosterEmp.EMP_LEVEL);
+    let divId = 'ALL';
+    if (dCode === '10') {
+      if (eLevel === '12') divId = 'SERVAY';
+      else if (eLevel === '7') divId = 'SR';
+      else divId = 'GENERAL';
+    } else if (dCode === '20') divId = 'ASPIRE';
+    else if (dCode === '60') divId = 'WOMENS_CARE';
+    else if (dCode === '30') divId = 'ONCOLOGY';
+    else if (dCode === '50') divId = 'DERMA';
+    setSelDiv(divId);
+    setSelZone(fullEmp.ZONE_NAME || 'ALL');
+    setSelRegion(fullEmp.REGION_NAME || 'ALL');
+    setSelArea(fullEmp.AREA_NAME || 'ALL');
+    setSelTerr(fullEmp.TERR_NAME || 'ALL');
+    setSelDesignation(eLevel || 'ALL');
+  }, [employees]);
 
   // NSM List: level '2'
   const nsmList = useMemo(() => {
@@ -650,7 +674,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
                 return (
                   <button
                     key={emp.EMP_ID}
-                    onClick={() => setSelectedRosterEmpId(emp.EMP_ID)}
+                    onClick={() => handleRosterSelect(emp)}
                     className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between text-xs group cursor-pointer ${
                       isActive
                         ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/10'
