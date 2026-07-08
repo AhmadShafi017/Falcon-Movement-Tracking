@@ -1287,15 +1287,15 @@ async function startServer() {
           E.EMP_NAME,
           E.EMP_LEVEL,
           E.DIV_CODE,
-          TO_CHAR(U.APPLY_DATE_TIME, 'YYYY-MM-DD') as APPLY_DATE,
-          TO_CHAR(U.APPLY_DATE_TIME, 'HH:MI AM') as TIME_STR,
+          TO_CHAR(U.APPLY_DATE_TIME + INTERVAL '6' HOUR, 'YYYY-MM-DD') as APPLY_DATE,
+          TO_CHAR(U.APPLY_DATE_TIME + INTERVAL '6' HOUR, 'HH:MI AM') as TIME_STR,
           U.GEO_LAT as LATITUDE,
           U.GEO_LONG as LONGITUDE,
           'Tracked Location' as EVENT_NAME
         FROM USER_LOCATION U
         JOIN EMPLOYEE_HIERARCHY E ON U.EMP_ID = E.EMP_ID
         WHERE E.STATUS = 'A'
-          AND TRUNC(U.APPLY_DATE_TIME) BETWEEN TO_DATE(:fDate, 'YYYY-MM-DD') AND TO_DATE(:tDate, 'YYYY-MM-DD')
+          AND TRUNC(U.APPLY_DATE_TIME + INTERVAL '6' HOUR) BETWEEN TO_DATE(:fDate, 'YYYY-MM-DD') AND TO_DATE(:tDate, 'YYYY-MM-DD')
           ${hCond}
           
         UNION ALL
