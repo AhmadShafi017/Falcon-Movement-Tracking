@@ -41,8 +41,8 @@ const hospitalIcon = new L.DivIcon({
   className: 'custom-marker',
   html: `
     <div class="relative group">
-      <div class="w-10 h-10 bg-pink-600 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white font-bold text-[18px] relative z-10">
-        H
+      <div class="w-10 h-10 bg-pink-600 rounded-full border-4 border-white shadow-2xl flex items-center justify-center text-white font-bold text-[22px] relative z-10">
+        +
       </div>
       <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 shadow-lg" />
       <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-pink-600 rotate-45 z-10" />
@@ -441,8 +441,8 @@ export const MainMap: React.FC<MainMapProps> = /*#__PURE__*/ memo(({
         <hr className="border-slate-100 my-2" />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-4 h-4 bg-pink-600 rounded-lg flex items-center justify-center text-[10px] text-white font-bold">H</div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Hospital</span>
+            <div className="w-4 h-4 bg-pink-600 rounded-lg flex items-center justify-center text-[14px] text-white font-bold leading-none">+</div>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">Chamber</span>
           </div>
           <button 
             onClick={() => setShowHospitals(!showHospitals)}
