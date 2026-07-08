@@ -193,7 +193,8 @@ export const LocationMap: React.FC<LocationMapProps> = memo(({
             zIndexOffset={isSelected ? 1000 : 0}
             eventHandlers={{ 
               click: (e) => { 
-                setSelectedEmpId(gl.EMP_ID); 
+                setSelectedEmpId(gl.EMP_ID);
+                syncHierarchy(gl);
                 e.target.openPopup();
               } 
             }}
