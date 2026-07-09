@@ -466,18 +466,23 @@ async function startServer() {
     });
   }
 
-  // Add cache-control middleware for API responses
+  // Add cache-control middleware for API responses.
+  // All responses are marked `private` so only the individual browser may cache
+  // them — shared proxies and network gateways are explicitly excluded.
+  // This prevents different PCs from receiving stale copies cached by a proxy.
   app.use('/api', (req, res, next) => {
-    // Don't cache movement or location-specific data for more than 30 seconds
     if (req.path.includes('/movement') || req.path.includes('/active-location') || req.path.includes('/hibernate-check')) {
+      // Live movement data — never cache
       res.setHeader('Cache-Control', 'private, max-age=0, no-cache');
     } else if (req.path.includes('/employees') || req.path.includes('/hierarchy')) {
-      // Employee hierarchy rarely changes - cache for 5 minutes
-      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+      // Employee hierarchy rarely changes — browser-only cache for 5 minutes
+      res.setHeader('Cache-Control', 'private, max-age=300');
     } else if (req.path.includes('/all-latest-locations') || req.path.includes('/current-page') || req.path.includes('/poi')) {
-      res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=30');
+      // Live location data — browser-only, short TTL
+      res.setHeader('Cache-Control', 'private, max-age=15');
     } else {
-      res.setHeader('Cache-Control', 'public, max-age=10');
+      // All other API responses (report data, etc.) — browser-only, very short TTL
+      res.setHeader('Cache-Control', 'private, max-age=10');
     }
     next();
   });
