@@ -1,0 +1,335 @@
+
+> react-example@0.0.0 dev
+> tsx server.ts
+
+[1G[0KServer running on http://localhost:5000
+[DB] initializing pool for ZSKWEB...
+Executing Report SQL Query from: 2026-07-08 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-08 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:59:38 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ReportPage.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:59:44 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/LocationSidebar.tsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:59:53 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ReportPage.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:00:18 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/ReportPage.tsx, /src/index.css[22m [33m(x2)[39m
+[2m5:00:42 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783486818884:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m5:00:42 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783486818884:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+[2m5:00:42 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783486818884:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+[2m5:00:42 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783486818884:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m5:00:42 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783486818884:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+Executing Report SQL Query from: 2026-07-08 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-08 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:09:44 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/LocationMap.tsx[22m
+Executing Report SQL Query from: 2026-07-08 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-07-01 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Report SQL Query from: 2026-06-30 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
+Executing Bounded POI SQL: Lat(23.02233415818073-23.131113001428762), Lng(90.30080223083498-90.51647758483888), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.02407202592398-23.13284946394915), Lng(90.32054328918457-90.53621864318848), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.071097048383017-23.084694287177935), Lng(90.41349591022484-90.44045532947533), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.07491113112568-23.081709729564736), Lng(90.41986548900606-90.4333451986313), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.075039446996353-23.081838038948074), Lng(90.42174303531648-90.43522274494171), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.07665028443362-23.08004958265595), Lng(90.42527121305467-90.4320110678673), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.07676978914154-23.080169084342888), Lng(90.42480810525801-90.43154796007063), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.07673911736216-23.080138413338855), Lng(90.42512100934984-90.43186086416245), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.075019706101152-23.08181829905091), Lng(90.42161428928377-90.43509399890901), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.076832820087695-23.080232113695665), Lng(90.42467584772015-90.43141570253277), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.076744052523136-23.080143348375078), Lng(90.42512100934984-90.43186086416245), Filters: GENERAL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:18:13 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/MainMap.tsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m5:18:14 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/MainMap.tsx[22m [33m(x2)[39m
+[2m5:18:41 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783487894868:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m5:18:41 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783487894868:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+[2m5:18:41 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783487894868:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m5:18:41 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783487894868:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+Executing Bounded POI SQL: Lat(23.17109062765899-23.605191042370492), Lng(89.63836755594389-90.50106897195951), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.154683070781875-23.588837143882824), Lng(89.66237640380861-90.52507781982423), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.197061363461344-23.414246862917214), Lng(90.04061508178712-90.47196578979494), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.29705869654312-23.514080710085377), Lng(89.89950942993164-90.33086013793945), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.263314036996558-23.480391293517524), Lng(89.87822341918945-90.30957412719727), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.138898759158668-23.573104418985793), Lng(89.59027862548828-90.4529800415039), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.321232168647427-23.4297678572007), Lng(89.98769187927248-90.20336723327638), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.317651958235754-23.42619057677417), Lng(89.98599679870608-90.20167215270999), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.156577063241414-23.590724944140234), Lng(89.62049102783205-90.48319244384767), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.154683070781875-23.588837143882824), Lng(89.66237640380861-90.52507781982423), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.152157705851263-23.586320034623498), Lng(89.62598419189455-90.48868560791017), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.245965325162995-23.463070953818775), Lng(89.825008392334-90.25635910034181), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.13068050799859-23.56491301396135), Lng(89.54907149902972-90.41177291504535), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.154314039914173-23.588469319466387), Lng(89.66063422759272-90.52333564360835), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.933976623316426-24.3655430976174), Lng(90.15676116943361-91.01946258544923), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(23.933976623316426-24.3655430976174), Lng(90.15676116943361-91.01946258544923), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(23.920796252893336-24.35240715361493), Lng(90.26113128662111-91.12383270263673), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(23.89505927264507-24.326756858214686), Lng(90.13341522216798-90.99611663818361), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(24.086245735831383-24.140207078985117), Lng(90.5038536779915-90.61169135499345), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(24.082719213345573-24.136682042688914), Lng(90.51483821868896-90.62267589569093), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(24.0839649393413-24.137927243719115), Lng(90.51031830596925-90.61815598297117), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(24.00025560313937-24.216109363589872), Lng(90.30428695678711-90.73563766479492), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(24.00307833658326-24.21892734202404), Lng(90.34823226928711-90.77958297729492), Filters: ASPIRE
+Executing Bounded POI SQL: Lat(23.682146887191657-23.898533164075218), Lng(90.4570655822754-90.88841629028322), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.678373901205884-23.894766454203992), Lng(90.44161605834962-90.87296676635744), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.731395460283547-23.839592678964614), Lng(90.54473304748537-90.76040840148927), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.732495478279336-23.840691781763436), Lng(90.54919624328615-90.76487159729005), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.746666585172807-23.800770099721802), Lng(90.60822200775148-90.71605968475343), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.732338333419822-23.84053476764831), Lng(90.54953956604005-90.76521492004396), Filters: GENERAL
+Executing Bounded POI SQL: Lat(23.732495478279336-23.840691781763436), Lng(90.5493679046631-90.765043258667), Filters: GENERAL

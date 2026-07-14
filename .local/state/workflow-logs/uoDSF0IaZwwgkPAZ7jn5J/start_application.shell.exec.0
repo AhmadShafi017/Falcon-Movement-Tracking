@@ -1,0 +1,228 @@
+[1G[0K⠙[1G[0K
+> react-example@0.0.0 dev
+> tsx server.ts
+
+[1G[0K⠙[1G[0KServer running on http://localhost:5000
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/.tmp-artifacts-1Rphs0L6zBsBtI-wA0sHz/artifacts/design-system/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[DB] initializing pool for ZSKWEB...
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/.tmp-artifacts-1Rphs0L6zBsBtI-wA0sHz/artifacts/expo/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/design-system/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/expo/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/mockup-sandbox/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/openscad/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/react-vite/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/slides/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/artifacts/artifacts/video-js/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:25:17 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.local/skills/artifacts/artifacts/mockup-sandbox/files/index.html[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:25:17 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.local/skills/artifacts/artifacts/expo/files/server/templates/landing-page.html[22m
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/.tmp-artifacts-1Rphs0L6zBsBtI-wA0sHz/artifacts/design-system/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2m4:25:17 AM[22m [36m[1m[vite][22m[39m changed tsconfig file detected: /home/runner/workspace/.local/skills/.tmp-artifacts-1Rphs0L6zBsBtI-wA0sHz/artifacts/expo/files/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:33:54 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/pages/ReportPage.tsx, /src/components/LocationSidebar.tsx, /src/components/Sidebar.tsx, /src/components/MainMap.tsx, /src/components/LocationMap.tsx, /src/index.css[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:34:01 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/LocationMap.tsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m4:34:03 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/LocationMap.tsx[22m [33m(x2)[39m
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:182:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7618:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7672:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7606:5)
+[2m4:34:25 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mTypeError: Failed to fetch
+    at cachedFetch (http://127.0.0.1:5000/src/hooks/useApiCache.ts:9:20)
+    at http://127.0.0.1:5000/src/App.tsx?t=1783485243793:189:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:12904:13)
+    at runWithFiberInDEV (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:851:66)
+    at commitHookEffectListMount (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6617:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:6652:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7701:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7688:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:7713:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5000/node_modules/.vite/deps/react-dom_client.js?v=93c4c093:8924:125)
+Executing Report SQL Query from: 2026-07-08 to 2026-07-08
+Oracle query error, generating mock tracking data for presentation: ORA-01785: ORDER BY item must be the number of a SELECT-list expression
+Help: https://docs.oracle.com/error-help/db/ora-01785/
